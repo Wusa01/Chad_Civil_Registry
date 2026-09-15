@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'التحقق من وثيقة' if lang == 'ar' else 'Vérifier un document' }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow rounded-4">
+            <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>
+                    {{ 'التحقق من صحة الوثيقة' if lang == 'ar' else 'Vérification du document' }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" data-no-loading>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            {{ 'رمز التحقق (QR Token)' if lang == 'ar' else 'Code de vérification' }}
+                        </label>
+                        <input type="text"
+                               name="token"
+                               class="form-control form-control-lg text-center font-monospace"
+                               placeholder="XXXXXXXXXXXXXXXX"
+                               maxlength="16"
+                               style="letter-spacing: 3px; text-transform: uppercase;"
+                               required>
+                        <div class="form-text text-center">
+                            {{ 'أدخل الرمز الموجود أسفل QR Code في الوثيقة' if lang == 'ar'
+                               else 'Entrez le code figurant sous le QR code du document' }}
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-chad-blue btn-lg">
+                            <i class="fas fa-search me-2"></i>
+                            {{ 'تحقق الآن' if lang == 'ar' else 'Vérifier maintenant' }}
+                        </button>
+                    </div>
+                </form>
+
+                {% if result %}
+                <hr class="my-4">
+                {% if result.valid %}
+                <div class="text-center">
+                    <i class="fas fa-check-circle fa-4x text-success mb-3 valid-icon"></i>
+                    <h5 class="text-success fw-bold">
+                        {{ 'الوثيقة صالحة ✓' if lang == 'ar' else 'Document valide ✓' }}
+                    </h5>
+                    <div class="card bg-light border-0 rounded-3 p-3 mt-3 text-start">
+                        <p class="mb-1">
+                            <strong>{{ 'الاسم:' if lang == 'ar' else 'Nom:' }}</strong>
+                            {{ result.name }}
+                        </p>
+                        <p class="mb-1">
+                            <strong>{{ 'المركز:' if lang == 'ar' else 'Centre:' }}</strong>
+                            {{ result.center }}
+                        </p>
+                        <p class="mb-0">
+                            <strong>{{ 'تاريخ الإصدار:' if lang == 'ar' else 'Date émission:' }}</strong>
+                            {{ result.issued_at.strftime('%Y-%m-%d') }}
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center">
+                    <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                    <h5 class="text-danger fw-bold">
+                        {{ 'الوثيقة غير صالحة ✗' if lang == 'ar' else 'Document invalide ✗' }}
+                    </h5>
+                    <p class="text-muted small">{{ result.message }}</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+            <div class="card-footer text-center bg-light rounded-bottom-4 py-2">
+                <a href="{{ url_for('citizen.portal') }}" class="text-muted small">
+                    <i class="fas fa-arrow-{{ 'right' if lang == 'ar' else 'left' }} me-1"></i>
+                    {{ 'العودة للبوابة' if lang == 'ar' else 'Retour au portail' }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

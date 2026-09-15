@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'بوابة المواطن' if lang=='ar' else 'Portail Citoyen' }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center mt-5">
+  <div class="col-md-7 text-center">
+
+    <div class="flag-mini-lg d-flex justify-content-center mb-4">
+      <span class="flag-blue-lg"></span>
+      <span class="flag-yellow-lg"></span>
+      <span class="flag-red-lg"></span>
+    </div>
+
+    <h2 class="fw-bold text-chad-blue mb-2">
+      {{ 'بوابة المواطن التشادي' if lang=='ar' else 'Portail du Citoyen Tchadien' }}
+    </h2>
+    <p class="text-muted mb-5">
+      {{ 'خدمات السجل المدني الرقمية — تقديم الطلبات، التتبع، والتحقق من الوثائق' if lang=='ar'
+         else 'Services numériques d\'état civil — demandes, suivi et vérification' }}
+    </p>
+
+    <div class="row g-3 justify-content-center mb-4">
+
+      <!-- دخول المواطن -->
+      <div class="col-md-5">
+        <div class="card border-0 shadow rounded-4 h-100 p-4 text-center citizen-card">
+          <div class="rounded-circle bg-blue-light mx-auto mb-3 d-flex align-items-center justify-content-center"
+               style="width:70px;height:70px">
+            <i class="fas fa-user fa-2x text-chad-blue"></i>
+          </div>
+          <h5 class="fw-bold">{{ 'لديك حساب؟' if lang=='ar' else 'Déjà inscrit?' }}</h5>
+          <p class="text-muted small">
+            {{ 'سجّل دخولك برقمك الوطني للوصول إلى خدماتك' if lang=='ar'
+               else 'Connectez-vous avec votre NNI pour accéder à vos services' }}
+          </p>
+          <a href="{{ url_for('citizen.login') }}" class="btn btn-chad-blue mt-auto fw-bold">
+            <i class="fas fa-sign-in-alt me-2"></i>
+            {{ 'تسجيل الدخول' if lang=='ar' else 'Connexion' }}
+          </a>
+        </div>
+      </div>
+
+      <!-- تسجيل مواطن جديد -->
+      <div class="col-md-5">
+        <div class="card border-0 shadow rounded-4 h-100 p-4 text-center citizen-card">
+          <div class="rounded-circle bg-green-light mx-auto mb-3 d-flex align-items-center justify-content-center"
+               style="width:70px;height:70px">
+            <i class="fas fa-user-plus fa-2x text-success"></i>
+          </div>
+          <h5 class="fw-bold">{{ 'مواطن جديد؟' if lang=='ar' else 'Nouveau citoyen?' }}</h5>
+          <p class="text-muted small">
+            {{ 'أنشئ حسابك برقمك الوطني لتقديم الطلبات إلكترونياً' if lang=='ar'
+               else 'Créez votre compte avec votre NNI pour soumettre vos demandes' }}
+          </p>
+          <a href="{{ url_for('citizen.register') }}" class="btn btn-success mt-auto fw-bold">
+            <i class="fas fa-user-plus me-2"></i>
+            {{ 'إنشاء حساب' if lang=='ar' else 'Créer un compte' }}
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- التحقق من وثيقة بدون دخول -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-3">
+          <i class="fas fa-qrcode fa-2x text-muted"></i>
+          <div class="text-start">
+            <div class="fw-semibold">{{ 'التحقق من وثيقة' if lang=='ar' else 'Vérifier un document' }}</div>
+            <div class="text-muted small">
+              {{ 'تحقق من صحة أي وثيقة بدون تسجيل دخول' if lang=='ar'
+                 else 'Vérifiez l\'authenticité sans connexion' }}
+            </div>
+          </div>
+        </div>
+        <a href="{{ url_for('citizen.verify') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-search me-1"></i>{{ 'تحقق' if lang=='ar' else 'Vérifier' }}
+        </a>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <a href="{{ url_for('auth.login') }}" class="text-muted small">
+        <i class="fas fa-user-shield me-1"></i>
+        {{ 'دخول موظفي الحالة المدنية' if lang=='ar' else 'Accès agents état civil' }}
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

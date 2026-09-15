@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'طلبات المواطنين' if lang=='ar' else 'Demandes citoyens' }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="fas fa-inbox me-2 text-chad-blue"></i>
+    {{ 'طلبات المواطنين' if lang=='ar' else 'Demandes des citoyens' }}
+  </h4>
+  <!-- عداد الطلبات المعلقة -->
+  <span class="badge bg-warning text-dark fs-6 px-3 py-2">
+    <i class="fas fa-hourglass-half me-1"></i>
+    {{ requests_page.total }} {{ 'طلب' if lang=='ar' else 'demande(s)' }}
+  </span>
+</div>
+
+<!-- فلتر الحالة -->
+<div class="mb-4">
+  <div class="btn-group shadow-sm">
+    <a href="{{ url_for('citizen.officer_requests', status='pending') }}"
+       class="btn {{ 'btn-warning' if status=='pending' else 'btn-outline-warning' }}">
+      <i class="fas fa-hourglass-half me-1"></i>
+      {{ 'قيد المراجعة' if lang=='ar' else 'En attente' }}
+    </a>
+    <a href="{{ url_for('citizen.officer_requests', status='approved') }}"
+       class="btn {{ 'btn-success' if status=='approved' else 'btn-outline-success' }}">
+      <i class="fas fa-check-circle me-1"></i>
+      {{ 'مقبولة' if lang=='ar' else 'Acceptées' }}
+    </a>
+    <a href="{{ url_for('citizen.officer_requests', status='rejected') }}"
+       class="btn {{ 'btn-danger' if status=='rejected' else 'btn-outline-danger' }}">
+      <i class="fas fa-times-circle me-1"></i>
+      {{ 'مرفوضة' if lang=='ar' else 'Refusées' }}
+    </a>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4">
+  <div class="card-body p-0">
+    {% if requests_page.items %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-chad">
+          <tr>
+            <th>#</th>
+            <th>{{ 'المواطن' if lang=='ar' else 'Citoyen' }}</th>
+            <th>{{ 'NNI' }}</th>
+            <th>{{ 'الوثيقة' if lang=='ar' else 'Document' }}</th>
+            <th>{{ 'نوع الطلب' if lang=='ar' else 'Type' }}</th>
+            <th>{{ 'صلة القرابة' if lang=='ar' else 'Parenté' }}</th>
+            <th>{{ 'التاريخ' if lang=='ar' else 'Date' }}</th>
+            <th>{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+            <th>{{ 'الإجراء' if lang=='ar' else 'Action' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in requests_page.items %}
+          <tr>
+            <td class="text-muted small">{{ r.id }}</td>
+
+            <td class="fw-semibold">{{ r.citizen.full_name }}</td>
+            <td class="font-monospace small">{{ r.citizen.nni }}</td>
+
+            <td>
+              {% if r.doc_type == 'birth' %}
+                <i class="fas fa-baby text-chad-blue me-1"></i>{{ 'ميلاد' if lang=='ar' else 'Naissance' }}
+              {% elif r.doc_type == 'death' %}
+                <i class="fas fa-mosque text-secondary me-1"></i>{{ 'وفاة' if lang=='ar' else 'Décès' }}
+              {% elif r.doc_type == 'marriage' %}
+                <i class="fas fa-ring text-success me-1"></i>{{ 'زواج' if lang=='ar' else 'Mariage' }}
+              {% elif r.doc_type == 'divorce' %}
+                <i class="fas fa-file-contract text-danger me-1"></i>{{ 'طلاق' if lang=='ar' else 'Divorce' }}
+              {% endif %}
+            </td>
+
+            <td class="small">
+              {% if r.request_type == 'new_certificate' %}{{ 'طلب شهادة' if lang=='ar' else 'Nouvelle' }}
+              {% elif r.request_type == 'reissue' %}{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+              {% else %}{{ 'تصحيح' if lang=='ar' else 'Correction' }}{% endif %}
+            </td>
+
+            <td class="small">{{ r.relationship or '—' }}</td>
+            <td class="small text-muted">{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+
+            <td>
+              {% if r.status == 'pending' %}
+                <span class="badge bg-warning text-dark">
+                  <i class="fas fa-hourglass-half me-1"></i>{{ 'معلق' if lang=='ar' else 'En attente' }}
+                </span>
+              {% elif r.status == 'approved' %}
+                <span class="badge bg-success">
+                  <i class="fas fa-check me-1"></i>{{ 'مقبول' if lang=='ar' else 'Accepté' }}
+                </span>
+              {% else %}
+                <span class="badge bg-danger">
+                  <i class="fas fa-times me-1"></i>{{ 'مرفوض' if lang=='ar' else 'Refusé' }}
+                </span>
+              {% endif %}
+            </td>
+
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+
+                <!-- زر المراجعة التفصيلية — دائماً -->
+                <a href="{{ url_for('citizen.officer_review', req_id=r.id) }}"
+                   class="btn btn-outline-primary btn-sm"
+                   title="{{ 'عرض التفاصيل واتخاذ القرار' if lang=='ar' else 'Examiner' }}">
+                  <i class="fas fa-eye me-1"></i>
+                  {{ 'مراجعة' if lang=='ar' else 'Examiner' }}
+                </a>
+
+                {% if r.status == 'pending' %}
+                <!-- ===== زر قبول سريع ===== -->
+                <form method="POST"
+                      action="{{ url_for('citizen.officer_review', req_id=r.id) }}"
+                      class="d-inline"
+                      onsubmit="return confirm('{{ 'تأكيد قبول الطلب؟' if lang=='ar' else 'Confirmer approbation?' }}')">
+                  <input type="hidden" name="action" value="approve">
+                  <button type="submit" class="btn btn-success btn-sm"
+                          title="{{ 'قبول الطلب مباشرة' if lang=='ar' else 'Approuver' }}">
+                    <i class="fas fa-check"></i>
+                  </button>
+                </form>
+
+                <!-- ===== زر رفض سريع — يفتح modal ===== -->
+                <button type="button"
+                        class="btn btn-danger btn-sm"
+                        title="{{ 'رفض الطلب' if lang=='ar' else 'Refuser' }}"
+                        onclick="openRejectModal({{ r.id }})">
+                  <i class="fas fa-times"></i>
+                </button>
+                {% endif %}
+
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if requests_page.pages > 1 %}
+    <div class="d-flex justify-content-center py-3">
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% for p in requests_page.iter_pages() %}
+            {% if p %}
+            <li class="page-item {{ 'active' if p == requests_page.page }}">
+              <a class="page-link" href="{{ url_for('citizen.officer_requests', status=status, page=p) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5">
+      <i class="fas fa-inbox fa-4x text-muted opacity-25 mb-3"></i>
+      <p class="text-muted">{{ 'لا توجد طلبات في هذه الفئة' if lang=='ar' else 'Aucune demande dans cette catégorie' }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+
+<!-- ===== Modal الرفض السريع ===== -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-danger text-white rounded-top-4">
+        <h6 class="modal-title fw-bold">
+          <i class="fas fa-times-circle me-2"></i>
+          {{ 'رفض الطلب' if lang=='ar' else 'Refuser la demande' }}
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="rejectModalForm" action="">
+        <div class="modal-body p-4">
+          <input type="hidden" name="action" value="reject">
+          <label class="form-label fw-semibold">
+            {{ 'سبب الرفض' if lang=='ar' else 'Motif du refus' }}
+            <span class="text-danger">*</span>
+          </label>
+          <textarea name="rejection_reason"
+                    class="form-control"
+                    rows="4"
+                    required
+                    placeholder="{{ 'اكتب سبب الرفض بوضوح حتى يتمكن المواطن من تصحيح طلبه...' if lang=='ar' else 'Indiquez clairement le motif du refus...' }}"></textarea>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+          </button>
+          <button type="submit" class="btn btn-danger fw-bold">
+            <i class="fas fa-times-circle me-1"></i>
+            {{ 'تأكيد الرفض' if lang=='ar' else 'Confirmer le refus' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function openRejectModal(reqId) {
+  var url = "{{ url_for('citizen.officer_review', req_id=0) }}".replace('/0', '/' + reqId);
+  document.getElementById('rejectModalForm').action = url;
+  var modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+  modal.show();
+}
+</script>
+
+{% endblock %}

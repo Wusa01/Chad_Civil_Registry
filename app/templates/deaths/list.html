@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'سجلات الوفيات' if lang == 'ar' else 'Registre des Décès' }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">
+            <i class="fas fa-mosque me-2 text-danger"></i>
+            {{ 'سجلات الوفيات' if lang == 'ar' else 'Registre des Décès' }}
+        </h4>
+        <p class="text-muted mb-0 small">
+            {{ 'إجمالي:' if lang == 'ar' else 'Total:' }}
+            <strong>{{ deaths.total }}</strong>
+        </p>
+    </div>
+    {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+    <a href="{{ url_for('deaths.new') }}" class="btn btn-danger">
+        <i class="fas fa-plus me-2"></i>
+        {{ 'تسجيل وفاة' if lang == 'ar' else 'Enregistrer un décès' }}
+    </a>
+    {% endif %}
+</div>
+
+<!-- البحث -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3">
+        <form method="GET" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" name="search" value="{{ search }}"
+                       class="form-control"
+                       placeholder="{{ 'بحث باسم المتوفى أو رقم الشهادة...' if lang == 'ar' else 'Rechercher par nom ou numéro...' }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-danger w-100">
+                    <i class="fas fa-search me-1"></i>
+                    {{ 'بحث' if lang == 'ar' else 'Chercher' }}
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('deaths.index') }}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-1"></i>
+                    {{ 'مسح' if lang == 'ar' else 'Effacer' }}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- الجدول -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        {% if deaths.items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-chad">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ 'رقم الشهادة' if lang == 'ar' else 'N° Acte' }}</th>
+                        <th>{{ 'اسم المتوفى' if lang == 'ar' else 'Nom du défunt' }}</th>
+                        <th>{{ 'الجنس' if lang == 'ar' else 'Sexe' }}</th>
+                        <th>{{ 'تاريخ الوفاة' if lang == 'ar' else 'Date du décès' }}</th>
+                        <th>{{ 'مكان الوفاة' if lang == 'ar' else 'Lieu du décès' }}</th>
+                        <th>{{ 'سبب الوفاة' if lang == 'ar' else 'Cause du décès' }}</th>
+                        <th>{{ 'المركز' if lang == 'ar' else 'Centre' }}</th>
+                        <th>{{ 'إجراءات' if lang == 'ar' else 'Actions' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for death in deaths.items %}
+                    <tr>
+                        <td class="text-muted small">{{ loop.index + (deaths.page - 1) * 20 }}</td>
+                        <td>
+                            <span class="badge bg-danger font-monospace">
+                                {{ death.certificate_number }}
+                            </span>
+                        </td>
+                        <td class="fw-semibold">{{ death.deceased_full_name }}</td>
+                        <td>
+                            {% if death.deceased_gender == 'M' %}
+                            <span class="badge bg-primary">
+                                {{ 'ذكر' if lang == 'ar' else 'M' }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-pink">
+                                {{ 'أنثى' if lang == 'ar' else 'F' }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="font-monospace small">{{ death.death_date }}</td>
+                        <td>{{ death.death_place }}</td>
+                        <td>
+                            <small class="text-muted">
+                                {{ death.cause_of_death[:30] }}
+                                {{ '...' if death.cause_of_death|length > 30 }}
+                            </small>
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ death.center.name_ar if lang == 'ar' and death.center
+                                   else death.center.name_fr if death.center else '—' }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('deaths.detail', death_id=death.id) }}"
+                                   class="btn btn-outline-danger">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+                                <a href="{{ url_for('deaths.edit', death_id=death.id) }}"
+                                   class="btn btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('deaths.export_pdf', death_id=death.id) }}"
+                                   class="btn btn-outline-secondary" target="_blank">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if deaths.pages > 1 %}
+        <div class="d-flex justify-content-center py-3">
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if deaths.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for('deaths.index', page=deaths.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-{{ 'right' if lang == 'ar' else 'left' }}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for p in deaths.iter_pages() %}
+                        {% if p %}
+                        <li class="page-item {{ 'active' if p == deaths.page }}">
+                            <a class="page-link"
+                               href="{{ url_for('deaths.index', page=p, search=search) }}">{{ p }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if deaths.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for('deaths.index', page=deaths.next_num, search=search) }}">
+                            <i class="fas fa-chevron-{{ 'left' if lang == 'ar' else 'right' }}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-mosque fa-4x text-muted opacity-25 mb-3"></i>
+            <p class="text-muted">
+                {{ 'لا توجد سجلات وفيات' if lang == 'ar' else 'Aucun acte de décès trouvé' }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

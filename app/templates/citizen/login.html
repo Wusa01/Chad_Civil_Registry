@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'دخول بوابة المواطن' if lang=='ar' else 'Connexion Portail Citoyen' }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center mt-4">
+  <div class="col-md-5 col-lg-4">
+
+    <!-- الشعار -->
+    <div class="text-center mb-4">
+      <div class="flag-mini-lg d-flex justify-content-center mb-3">
+        <span class="flag-blue-lg"></span>
+        <span class="flag-yellow-lg"></span>
+        <span class="flag-red-lg"></span>
+      </div>
+      <h4 class="fw-bold text-chad-blue">
+        {{ 'بوابة المواطن التشادي' if lang=='ar' else 'Portail du Citoyen' }}
+      </h4>
+      <p class="text-muted small">
+        {{ 'سجّل دخولك برقمك الوطني' if lang=='ar' else 'Connectez-vous avec votre NNI' }}
+      </p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4">
+
+        <!-- رسائل الخطأ -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} alert-dismissible rounded-3 py-2 small">
+            {{ msg }}
+            <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+          </div>
+          {% endfor %}
+        {% endwith %}
+
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              <i class="fas fa-id-card me-1 text-chad-blue"></i>
+              {{ 'الرقم الوطني (NNI)' if lang=='ar' else 'Numéro National (NNI)' }}
+            </label>
+            <input type="text" name="nni" class="form-control form-control-lg text-center font-monospace"
+                   placeholder="000000000000" required autofocus
+                   value="{{ request.form.get('nni','') }}">
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="fas fa-lock me-1 text-chad-blue"></i>
+              {{ 'كلمة المرور' if lang=='ar' else 'Mot de passe' }}
+            </label>
+            <input type="password" name="password" class="form-control form-control-lg" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-chad-blue btn-lg fw-bold">
+              <i class="fas fa-sign-in-alt me-2"></i>
+              {{ 'دخول' if lang=='ar' else 'Connexion' }}
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-3">
+        <div class="text-center small">
+          <span class="text-muted">{{ 'ليس لديك حساب؟' if lang=='ar' else 'Pas encore de compte?' }}</span>
+          <a href="{{ url_for('citizen.register') }}" class="fw-semibold text-chad-blue ms-1">
+            {{ 'إنشاء حساب' if lang=='ar' else 'Créer un compte' }}
+          </a>
+        </div>
+        <div class="text-center small mt-2">
+          <a href="{{ url_for('citizen.verify') }}" class="text-muted">
+            <i class="fas fa-qrcode me-1"></i>
+            {{ 'التحقق من وثيقة بدون دخول' if lang=='ar' else 'Vérifier sans connexion' }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <a href="{{ url_for('auth.login') }}" class="text-muted small">
+        <i class="fas fa-user-shield me-1"></i>
+        {{ 'دخول موظفي الحالة المدنية' if lang=='ar' else 'Accès agents état civil' }}
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

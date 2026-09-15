@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مركز' if edit else 'مركز جديد' }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:700px">
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header bg-chad-blue text-white rounded-top-4">
+      <h5 class="mb-0">
+        <i class="fas fa-building me-2"></i>
+        {% if edit %}
+          {{ 'تعديل مركز: ' + center.name_ar if lang=='ar' else 'Modifier centre: ' + center.name_fr }}
+        {% else %}
+          {{ 'إضافة مركز جديد' if lang=='ar' else 'Nouveau centre' }}
+        {% endif %}
+      </h5>
+    </div>
+    <div class="card-body p-4">
+      <form method="POST">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">{{ 'الاسم بالعربية' if lang=='ar' else 'Nom arabe' }} <span class="text-danger">*</span></label>
+            <input type="text" name="name_ar" class="form-control"
+                   value="{{ center.name_ar if edit else '' }}" required
+                   placeholder="مركز الحالة المدنية - ...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">{{ 'الاسم بالفرنسية' if lang=='ar' else 'Nom français' }} <span class="text-danger">*</span></label>
+            <input type="text" name="name_fr" class="form-control"
+                   value="{{ center.name_fr if edit else '' }}" required
+                   placeholder="Centre d'état civil - ...">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">{{ 'المنطقة / Région' }} <span class="text-danger">*</span></label>
+            <input type="text" name="region" class="form-control"
+                   value="{{ center.region if edit else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">{{ 'القسم / Département' }} <span class="text-danger">*</span></label>
+            <input type="text" name="department" class="form-control"
+                   value="{{ center.department if edit else '' }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold">{{ 'الرمز / Code' }} <span class="text-danger">*</span></label>
+            <input type="text" name="code" class="form-control text-uppercase"
+                   value="{{ center.code if edit else '' }}"
+                   {{ 'readonly' if edit }} required
+                   placeholder="NDJ001"
+                   pattern="[A-Za-z0-9]+" maxlength="10">
+            {% if not edit %}
+            <div class="form-text">{{ 'حروف وأرقام فقط، بدون مسافات' if lang=='ar' else 'Lettres et chiffres uniquement' }}</div>
+            {% endif %}
+          </div>
+          {% if edit %}
+          <div class="col-md-6 d-flex align-items-end">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="is_active" id="isActive"
+                     {{ 'checked' if center.is_active }}>
+              <label class="form-check-label fw-bold" for="isActive">
+                {{ 'مركز نشط' if lang=='ar' else 'Centre actif' }}
+              </label>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-chad-blue">
+            <i class="fas fa-save me-1"></i>
+            {{ 'حفظ' if lang=='ar' else 'Enregistrer' }}
+          </button>
+          <a href="{{ url_for('admin.centers') }}" class="btn btn-outline-secondary">
+            {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

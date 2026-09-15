@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'إدارة المراكز' if lang == 'ar' else 'Gestion des centres' }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">
+        <i class="fas fa-building me-2 text-chad-blue"></i>
+        {{ 'مراكز الحالة المدنية' if lang == 'ar' else 'Centres d\'état civil' }}
+    </h4>
+    <a href="{{ url_for('admin.new_center') }}" class="btn btn-chad-blue">
+        <i class="fas fa-plus me-2"></i>
+        {{ 'إضافة مركز' if lang == 'ar' else 'Ajouter centre' }}
+    </a>
+</div>
+
+<!-- البحث -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3">
+        <form method="GET" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" name="search" value="{{ search }}"
+                       class="form-control"
+                       placeholder="{{ 'بحث باسم المركز أو الرمز أو المنطقة...' if lang == 'ar' else 'Rechercher...' }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-chad-blue w-100">
+                    <i class="fas fa-search me-1"></i>
+                    {{ 'بحث' if lang == 'ar' else 'Chercher' }}
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('admin.centers') }}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-1"></i>
+                    {{ 'مسح' if lang == 'ar' else 'Effacer' }}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- الجدول -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        {% if centers.items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-chad">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ 'الرمز' if lang == 'ar' else 'Code' }}</th>
+                        <th>{{ 'الاسم بالعربية' if lang == 'ar' else 'Nom arabe' }}</th>
+                        <th>{{ 'الاسم بالفرنسية' if lang == 'ar' else 'Nom français' }}</th>
+                        <th>{{ 'المنطقة' if lang == 'ar' else 'Région' }}</th>
+                        <th>{{ 'الدائرة' if lang == 'ar' else 'Département' }}</th>
+                        <th>{{ 'الحالة' if lang == 'ar' else 'Statut' }}</th>
+                        <th>{{ 'إجراءات' if lang == 'ar' else 'Actions' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for center in centers.items %}
+                    <tr>
+                        <td class="text-muted small">{{ loop.index }}</td>
+                        <td>
+                            <span class="badge bg-chad-blue font-monospace">
+                                {{ center.code }}
+                            </span>
+                        </td>
+                        <td class="fw-semibold">{{ center.name_ar }}</td>
+                        <td>{{ center.name_fr }}</td>
+                        <td>{{ center.region }}</td>
+                        <td>{{ center.department }}</td>
+                        <td>
+                            {% if center.is_active %}
+                            <span class="badge bg-success">
+                                {{ 'نشط' if lang == 'ar' else 'Actif' }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">
+                                {{ 'غير نشط' if lang == 'ar' else 'Inactif' }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('admin.edit_center', center_id=center.id) }}"
+                                   class="btn btn-outline-warning"
+                                   title="{{ 'تعديل' if lang == 'ar' else 'Modifier' }}">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button"
+                                        class="btn btn-outline-danger"
+                                        title="{{ 'حذف نهائي' if lang == 'ar' else 'Supprimer' }}"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deleteCenterModal"
+                                        data-center-id="{{ center.id }}"
+                                        data-center-name="{{ center.name_ar }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if centers.pages > 1 %}
+        <div class="d-flex justify-content-center py-3">
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if centers.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for('admin.centers', page=centers.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-{{ 'right' if lang == 'ar' else 'left' }}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for p in centers.iter_pages() %}
+                        {% if p %}
+                        <li class="page-item {{ 'active' if p == centers.page }}">
+                            <a class="page-link"
+                               href="{{ url_for('admin.centers', page=p, search=search) }}">{{ p }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if centers.has_next %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="{{ url_for('admin.centers', page=centers.next_num, search=search) }}">
+                            <i class="fas fa-chevron-{{ 'left' if lang == 'ar' else 'right' }}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-building fa-4x text-muted opacity-25 mb-3"></i>
+            <p class="text-muted">
+                {{ 'لا توجد مراكز' if lang == 'ar' else 'Aucun centre trouvé' }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal تأكيد حذف المركز -->
+<div class="modal fade" id="deleteCenterModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white rounded-top-4">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ 'تأكيد حذف المركز' if lang == 'ar' else 'Confirmer la suppression' }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-danger d-flex align-items-start gap-2 mb-3">
+                    <i class="fas fa-exclamation-circle mt-1 flex-shrink-0"></i>
+                    <div>
+                        <strong>{{ 'تحذير:' if lang == 'ar' else 'Attention :' }}</strong>
+                        {{ 'لا يمكن حذف مركز به موظفون نشطون. قم بنقلهم أو تعليق حساباتهم أولاً.' if lang == 'ar' else 'Impossible de supprimer un centre avec des agents actifs.' }}
+                    </div>
+                </div>
+                <p class="mb-1">{{ 'المركز المراد حذفه:' if lang == 'ar' else 'Centre à supprimer :' }}</p>
+                <p class="fw-bold fs-5 text-danger" id="modalCenterName"></p>
+                <hr>
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-lock me-1"></i>
+                    {{ 'أدخل كلمة مرورك للتأكيد:' if lang == 'ar' else 'Entrez votre mot de passe :' }}
+                </label>
+                <input type="password" id="deleteCenterPassword" class="form-control" placeholder="••••••••">
+                <div id="deleteCenterPasswordError" class="text-danger small mt-1 d-none">
+                    {{ 'كلمة المرور مطلوبة' if lang == 'ar' else 'Mot de passe requis' }}
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-outline-secondary rounded-3" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {{ 'إلغاء' if lang == 'ar' else 'Annuler' }}
+                </button>
+                <form id="deleteCenterForm" method="POST" style="display:inline">
+                    <input type="hidden" name="confirm_password" id="deleteCenterPasswordInput">
+                    <button type="submit" class="btn btn-danger rounded-3" id="confirmDeleteCenterBtn">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        {{ 'حذف نهائي' if lang == 'ar' else 'Supprimer définitivement' }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const deleteCenterModal = document.getElementById('deleteCenterModal');
+deleteCenterModal.addEventListener('show.bs.modal', function(event) {
+    const btn      = event.relatedTarget;
+    const centerId = btn.getAttribute('data-center-id');
+    const name     = btn.getAttribute('data-center-name');
+
+    document.getElementById('modalCenterName').textContent = name;
+    document.getElementById('deleteCenterForm').action = '/admin/centers/' + centerId + '/delete';
+    document.getElementById('deleteCenterPassword').value = '';
+    document.getElementById('deleteCenterPasswordError').classList.add('d-none');
+});
+
+document.getElementById('confirmDeleteCenterBtn').addEventListener('click', function(e) {
+    const pw = document.getElementById('deleteCenterPassword').value.trim();
+    if (!pw) {
+        e.preventDefault();
+        document.getElementById('deleteCenterPasswordError').classList.remove('d-none');
+        return;
+    }
+    document.getElementById('deleteCenterPasswordInput').value = pw;
+});
+</script>
+
+{% endblock %}

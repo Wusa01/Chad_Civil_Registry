@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'التقارير والإحصاءات' if lang == 'ar' else 'Rapports et Statistiques' }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.chart-container { position: relative; height: 300px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0">
+        <i class="fas fa-chart-bar me-2 text-chad-blue"></i>
+        {{ 'التقارير والإحصاءات' if lang == 'ar' else 'Rapports et Statistiques' }}
+    </h4>
+    <!-- فلتر السنة -->
+    <form method="GET" class="d-flex gap-2 align-items-center">
+        <label class="form-label mb-0 fw-semibold">
+            {{ 'السنة:' if lang == 'ar' else 'Année:' }}
+        </label>
+        <select name="year" class="form-select form-select-sm" style="width:100px"
+                onchange="this.form.submit()">
+            {% for y in range(2020, 2027) %}
+            <option value="{{ y }}" {{ 'selected' if y == stats.year }}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<!-- بطاقات الإجماليات -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3">
+            <i class="fas fa-baby fa-2x text-chad-blue mb-2"></i>
+            <h3 class="fw-bold text-chad-blue">{{ stats.total_births }}</h3>
+            <p class="text-muted mb-0 small">
+                {{ 'إجمالي المواليد' if lang == 'ar' else 'Total Naissances' }}
+            </p>
+            <small class="text-success">
+                +{{ stats.births_this_year }}
+                {{ 'هذا العام' if lang == 'ar' else 'cette année' }}
+            </small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3">
+            <i class="fas fa-ring fa-2x text-success mb-2"></i>
+            <h3 class="fw-bold text-success">{{ stats.total_marriages }}</h3>
+            <p class="text-muted mb-0 small">
+                {{ 'إجمالي الزواج' if lang == 'ar' else 'Total Mariages' }}
+            </p>
+            <small class="text-success">
+                +{{ stats.marriages_this_year }}
+                {{ 'هذا العام' if lang == 'ar' else 'cette année' }}
+            </small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3">
+            <i class="fas fa-mosque fa-2x text-danger mb-2"></i>
+            <h3 class="fw-bold text-danger">{{ stats.total_deaths }}</h3>
+            <p class="text-muted mb-0 small">
+                {{ 'إجمالي الوفيات' if lang == 'ar' else 'Total Décès' }}
+            </p>
+            <small class="text-danger">
+                +{{ stats.deaths_this_year }}
+                {{ 'هذا العام' if lang == 'ar' else 'cette année' }}
+            </small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-4 text-center p-3">
+            <i class="fas fa-chart-pie fa-2x text-warning mb-2"></i>
+            <h3 class="fw-bold text-warning">
+                {{ stats.total_births + stats.total_marriages + stats.total_deaths }}
+            </h3>
+            <p class="text-muted mb-0 small">
+                {{ 'إجمالي السجلات' if lang == 'ar' else 'Total Enregistrements' }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- الرسوم البيانية -->
+<div class="row g-4 mb-4">
+
+    <!-- المخطط الشهري -->
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white rounded-top-4 py-3 border-bottom">
+                <h6 class="fw-bold mb-0">
+                    <i class="fas fa-chart-line me-2 text-chad-blue"></i>
+                    {{ 'التوزيع الشهري' if lang == 'ar' else 'Distribution mensuelle' }}
+                    ({{ stats.year }})
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- توزيع الجنس -->
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white rounded-top-4 py-3 border-bottom">
+                <h6 class="fw-bold mb-0">
+                    <i class="fas fa-venus-mars me-2 text-chad-blue"></i>
+                    {{ 'توزيع جنس المواليد' if lang == 'ar' else 'Sexe des nouveau-nés' }}
+                </h6>
+            </div>
+            <div class="card-body p-4">
+                <div class="chart-container">
+                    <canvas id="genderChart"></canvas>
+                </div>
+                <div class="d-flex justify-content-around mt-3">
+                    <div class="text-center">
+                        <span class="badge bg-primary px-3 py-2">
+                            {{ stats.male_births }}
+                            {{ 'ذكر' if lang == 'ar' else 'Garçons' }}
+                        </span>
+                    </div>
+                    <div class="text-center">
+                        <span class="badge bg-pink px-3 py-2">
+                            {{ stats.female_births }}
+                            {{ 'أنثى' if lang == 'ar' else 'Filles' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- أعلى المراكز + أسباب الوفاة -->
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white rounded-top-4 py-3 border-bottom">
+                <h6 class="fw-bold mb-0">
+                    <i class="fas fa-building me-2 text-chad-blue"></i>
+                    {{ 'أعلى المراكز تسجيلاً' if lang == 'ar' else 'Centres les plus actifs' }}
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>{{ 'المركز' if lang == 'ar' else 'Centre' }}</th>
+                            <th>{{ 'عدد المواليد' if lang == 'ar' else 'Naissances' }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for center_name, total in stats.top_centers_births %}
+                        <tr>
+                            <td class="text-muted">{{ loop.index }}</td>
+                            <td>{{ center_name }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height:6px">
+                                        <div class="progress-bar bg-chad-blue"
+                                             style="width:{{ (total / stats.total_births * 100)|round if stats.total_births > 0 else 0 }}%">
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-chad-blue">{{ total }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white rounded-top-4 py-3 border-bottom">
+                <h6 class="fw-bold mb-0">
+                    <i class="fas fa-heartbeat me-2 text-danger"></i>
+                    {{ 'أبرز أسباب الوفاة' if lang == 'ar' else 'Principales causes de décès' }}
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                {% for cause, count in stats.top_death_causes %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <small class="text-truncate me-2" style="max-width:200px">{{ cause }}</small>
+                    <span class="badge bg-danger">{{ count }}</span>
+                </div>
+                <div class="progress mb-3" style="height:5px">
+                    <div class="progress-bar bg-danger"
+                         style="width:{{ (count / stats.total_deaths * 100)|round if stats.total_deaths > 0 else 0 }}%">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const months = {{ (['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر']
+                   if lang == 'ar' else
+                   ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc']) | tojson }};
+
+// المخطط الشهري
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'line',
+    data: {
+        labels: months,
+        datasets: [
+            {
+                label: '{{ "المواليد" if lang == "ar" else "Naissances" }}',
+                data: {{ stats.monthly_births | tojson }},
+                borderColor: '#003082',
+                backgroundColor: 'rgba(0,48,130,0.1)',
+                tension: 0.4,
+                fill: true
+            },
+            {
+                label: '{{ "الزواج" if lang == "ar" else "Mariages" }}',
+                data: {{ stats.monthly_marriages | tojson }},
+                borderColor: '#198754',
+                backgroundColor: 'rgba(25,135,84,0.1)',
+                tension: 0.4,
+                fill: true
+            },
+            {
+                label: '{{ "الوفيات" if lang == "ar" else "Décès" }}',
+                data: {{ stats.monthly_deaths | tojson }},
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220,53,69,0.1)',
+                tension: 0.4,
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: { y: { beginAtZero: true } }
+    }
+});
+
+// مخطط الجنس
+new Chart(document.getElementById('genderChart'), {
+    type: 'doughnut',
+    data: {
+        labels: [
+            '{{ "ذكر" if lang == "ar" else "Garçons" }}',
+            '{{ "أنثى" if lang == "ar" else "Filles" }}'
+        ],
+        datasets: [{
+            data: [{{ stats.male_births }}, {{ stats.female_births }}],
+            backgroundColor: ['#0d6efd', '#e83e8c'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+</script>
+{% endblock %}

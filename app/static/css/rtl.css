@@ -1,0 +1,43 @@
+/* ===== دعم RTL العربي ===== */
+body {
+    direction: rtl;
+    text-align: right;
+}
+
+.navbar-nav {
+    padding-right: 0;
+}
+
+.dropdown-menu {
+    text-align: right;
+}
+
+.form-label {
+    display: block;
+    text-align: right;
+}
+
+.alert {
+    text-align: right;
+}
+
+.table th,
+.table td {
+    text-align: right;
+}
+
+.pagination {
+    direction: ltr;
+}
+
+.modal-header .btn-close {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* عكس أيقونات التنقل */
+.breadcrumb-item + .breadcrumb-item::before {
+    float: right;
+    padding-left: 0.5rem;
+    padding-right: 0;
+}

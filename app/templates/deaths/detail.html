@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'شهادة وفاة' if lang=='ar' else 'Acte de décès' }} — {{ death.certificate_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="fas fa-mosque me-2 text-chad-blue"></i>
+    {{ 'شهادة وفاة' if lang=='ar' else 'Acte de décès' }}
+  </h4>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('deaths.edit', death_id=death.id) }}" class="btn btn-outline-primary btn-sm">
+      <i class="fas fa-edit me-1"></i>{{ 'تعديل' if lang=='ar' else 'Modifier' }}
+    </a>
+    <a href="{{ url_for('deaths.export_pdf', death_id=death.id) }}" class="btn btn-chad-blue btn-sm" target="_blank">
+      <i class="fas fa-file-pdf me-1"></i>{{ 'تصدير PDF' if lang=='ar' else 'Exporter PDF' }}
+    </a>
+    <a href="{{ url_for('deaths.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-right me-1"></i>{{ 'رجوع' if lang=='ar' else 'Retour' }}
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-8">
+
+    <!-- بيانات المتوفى -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-user me-2"></i>{{ 'بيانات المتوفى' if lang=='ar' else 'Données du défunt' }}</h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'رقم الشهادة' if lang=='ar' else 'N° Acte' }}</div>
+            <div class="fw-bold fs-5 text-chad-blue">{{ death.certificate_number }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date enregistrement' }}</div>
+            <div>{{ death.registration_date }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}</div>
+            <div class="fw-bold">{{ death.deceased_full_name }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">{{ 'الجنس' if lang=='ar' else 'Sexe' }}</div>
+            <div>{{ 'ذكر' if death.deceased_gender == 'M' else 'أنثى' }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">{{ 'العمر' if lang=='ar' else 'Âge' }}</div>
+            <div>{{ death.deceased_age or '—' }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date naissance' }}</div>
+            <div>{{ death.deceased_birth_date or '—' }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'محل الإقامة المعتاد' if lang=='ar' else 'Résidence' }}</div>
+            <div>{{ death.usual_residence }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الوفاة -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-info-circle me-2 text-chad-blue"></i>{{ 'بيانات الوفاة' if lang=='ar' else 'Données du décès' }}</h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'تاريخ الوفاة' if lang=='ar' else 'Date du décès' }}</div>
+            <div class="fw-bold">{{ death.death_date }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'مكان الوفاة' if lang=='ar' else 'Lieu du décès' }}</div>
+            <div>{{ death.death_place }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'نوع مكان الوفاة' if lang=='ar' else 'Type de lieu' }}</div>
+            <div>
+              {% if death.death_place_type == 'hospital' %}{{ 'مستشفى' if lang=='ar' else 'Hôpital' }}
+              {% elif death.death_place_type == 'home' %}{{ 'المنزل' if lang=='ar' else 'Domicile' }}
+              {% else %}{{ 'مكان آخر' if lang=='ar' else 'Autre lieu' }}{% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'سبب الوفاة' if lang=='ar' else 'Cause du décès' }}</div>
+            <div>{{ death.cause_of_death }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'المُشهِد' if lang=='ar' else 'Certifié par' }}</div>
+            <div>{{ death.certifier_name }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'ضابط الحالة المدنية' if lang=='ar' else 'Officier' }}</div>
+            <div>{{ death.civil_officer }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'مركز الحالة المدنية' if lang=='ar' else 'Centre' }}</div>
+            <div>{{ death.center.name_ar if lang=='ar' else death.center.name_fr }}</div>
+          </div>
+          {% if death.notes %}
+          <div class="col-12">
+            <div class="text-muted small">{{ 'ملاحظات' if lang=='ar' else 'Notes' }}</div>
+            <div>{{ death.notes }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- QR Code -->
+  <div class="col-md-4">
+    {% if document %}
+    <div class="card border-0 shadow-sm rounded-4 text-center">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold"><i class="fas fa-qrcode me-2"></i>{{ 'التحقق' if lang=='ar' else 'Vérification' }}</h6>
+      </div>
+      <div class="card-body p-4">
+        {% if qr_image %}
+        <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code" width="150" class="rounded mb-3">
+        {% endif %}
+        <p class="text-muted small mb-3">{{ 'امسح الرمز للتحقق من الوثيقة' if lang=='ar' else 'Scannez pour vérifier' }}</p>
+        <a href="{{ url_for('documents.verify', token=document.qr_code) }}"
+           class="btn btn-outline-success btn-sm w-100" target="_blank">
+          <i class="fas fa-check-circle me-1"></i>{{ 'تحقق من الوثيقة' if lang=='ar' else 'Vérifier' }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

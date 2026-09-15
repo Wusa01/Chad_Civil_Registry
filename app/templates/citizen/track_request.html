@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تتبع الطلب #' ~ cr.id if lang=='ar' else 'Suivi demande #' ~ cr.id }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="fas fa-search-location me-2 text-chad-blue"></i>
+    {{ 'تتبع الطلب رقم #' ~ cr.id if lang=='ar' else 'Suivi demande n°' ~ cr.id }}
+  </h4>
+  <a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-arrow-right me-1"></i>{{ 'رجوع' if lang=='ar' else 'Retour' }}
+  </a>
+</div>
+
+<!-- ===== بطاقة الحالة الكبيرة ===== -->
+<div class="row justify-content-center mb-4">
+  <div class="col-md-8">
+
+    {% if cr.status == 'pending' %}
+    <!-- قيد المراجعة -->
+    <div class="card border-0 shadow rounded-4 border-top border-4 border-warning">
+      <div class="card-body p-5 text-center">
+        <div class="mb-3">
+          <i class="fas fa-hourglass-half fa-3x text-warning mb-3"></i>
+        </div>
+        <span class="badge bg-warning text-dark fs-6 px-4 py-2 rounded-pill mb-3 d-inline-block">
+          {{ 'قيد المراجعة' if lang=='ar' else 'En cours de traitement' }}
+        </span>
+        <p class="text-muted mb-0">
+          {{ 'طلبك وصل إلى المركز وسيتم مراجعته من قِبَل الموظف المختص قريباً.' if lang=='ar'
+             else 'Votre demande a été reçue et sera examinée par l\'agent compétent.' }}
+        </p>
+      </div>
+    </div>
+
+    {% elif cr.status == 'approved' %}
+    <!-- مقبول -->
+    <div class="card border-0 shadow rounded-4 border-top border-4 border-success">
+      <div class="card-body p-5 text-center">
+        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+        <span class="badge bg-success fs-6 px-4 py-2 rounded-pill mb-3 d-inline-block">
+          {{ 'تم قبول طلبك ✓' if lang=='ar' else 'Demande acceptée ✓' }}
+        </span>
+
+        {% if cr.issued_doc_id %}
+        <!-- ✅ الوثيقة جاهزة — زر التحميل -->
+        <p class="text-muted mb-4">
+          {{ 'وثيقتك الرسمية جاهزة للتحميل.' if lang=='ar'
+             else 'Votre document officiel est prêt à être téléchargé.' }}
+        </p>
+        <a href="{{ url_for('citizen.download_doc', req_id=cr.id) }}"
+           class="btn btn-success btn-lg px-5 fw-bold shadow-sm" target="_blank">
+          <i class="fas fa-file-pdf me-2"></i>
+          {{ 'تحميل الشهادة (PDF)' if lang=='ar' else 'Télécharger le document (PDF)' }}
+        </a>
+
+        {% else %}
+        <!-- ⚠️ مقبول لكن الوثيقة لم تُربط بعد -->
+        <p class="text-muted mb-3">
+          {{ 'تمت الموافقة على طلبك، لكن الوثيقة لم تُربط بعد.' if lang=='ar'
+             else "Votre demande a été approuvée, mais le document n'a pas encore été lié." }}
+        </p>
+        <div class="alert alert-warning border-0 rounded-3 text-start mb-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <strong>{{ 'ماذا تفعل؟' if lang=='ar' else 'Que faire ?' }}</strong>
+          <ul class="mb-0 mt-2 small">
+            <li>
+              {{ 'تواصل مع مركز الحالة المدنية وأخبرهم برقم طلبك:' if lang=='ar'
+                 else 'Contactez le centre état civil avec votre numéro de demande :' }}
+              <strong class="font-monospace">#{{ cr.id }}</strong>
+            </li>
+            <li class="mt-1">
+              {{ 'أو أعد تحميل هذه الصفحة بعد قليل.' if lang=='ar'
+                 else 'Ou rechargez cette page dans quelques instants.' }}
+            </li>
+          </ul>
+        </div>
+        <button onclick="location.reload()" class="btn btn-outline-success px-4">
+          <i class="fas fa-sync-alt me-2"></i>
+          {{ 'تحديث الصفحة' if lang=='ar' else 'Actualiser la page' }}
+        </button>
+        {% endif %}
+
+        {% if cr.reviewed_at %}
+        <p class="text-muted small mt-4 mb-0">
+          <i class="fas fa-calendar-check me-1"></i>
+          {{ 'تاريخ القبول:' if lang=='ar' else 'Approuvé le:' }}
+          {{ cr.reviewed_at.strftime('%Y-%m-%d %H:%M') }}
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% elif cr.status == 'rejected' %}
+    <!-- مرفوض -->
+    <div class="card border-0 shadow rounded-4 border-top border-4 border-danger">
+      <div class="card-body p-5 text-center">
+        <div class="mb-3">
+          <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+        </div>
+        <span class="badge bg-danger fs-6 px-4 py-2 rounded-pill mb-3 d-inline-block">
+          {{ 'تم رفض الطلب' if lang=='ar' else 'Demande refusée' }}
+        </span>
+
+        {% if cr.rejection_reason %}
+        <div class="alert alert-danger border-0 rounded-3 text-start mb-4">
+          <strong>
+            <i class="fas fa-exclamation-circle me-1"></i>
+            {{ 'سبب الرفض:' if lang=='ar' else 'Motif du refus:' }}
+          </strong>
+          <p class="mb-0 mt-1">{{ cr.rejection_reason }}</p>
+        </div>
+        {% endif %}
+
+        <p class="text-muted small mb-4">
+          {{ 'يمكنك تقديم طلب جديد بعد تصحيح البيانات المطلوبة.' if lang=='ar'
+             else 'Vous pouvez soumettre une nouvelle demande après correction.' }}
+        </p>
+        <a href="{{ url_for('citizen.new_request', doc_type=cr.doc_type, request_type=cr.request_type) }}"
+           class="btn btn-outline-danger px-4">
+          <i class="fas fa-redo me-2"></i>
+          {{ 'إعادة تقديم الطلب' if lang=='ar' else 'Nouvelle demande' }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ===== تفاصيل الطلب ===== -->
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="fas fa-clipboard-list me-2 text-chad-blue"></i>
+          {{ 'تفاصيل الطلب' if lang=='ar' else 'Détails de la demande' }}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'رقم الطلب' if lang=='ar' else 'N° demande' }}</div>
+            <div class="fw-bold">#{{ cr.id }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'تاريخ التقديم' if lang=='ar' else 'Date de dépôt' }}</div>
+            <div>{{ cr.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'نوع الوثيقة' if lang=='ar' else 'Type de document' }}</div>
+            <div class="fw-semibold">
+              {% if cr.doc_type == 'birth' %}
+                <i class="fas fa-baby text-chad-blue me-1"></i>{{ 'شهادة ميلاد' if lang=='ar' else 'Acte de naissance' }}
+              {% elif cr.doc_type == 'death' %}
+                <i class="fas fa-mosque text-secondary me-1"></i>{{ 'شهادة وفاة' if lang=='ar' else 'Acte de décès' }}
+              {% elif cr.doc_type == 'marriage' %}
+                <i class="fas fa-ring text-success me-1"></i>{{ 'عقد زواج' if lang=='ar' else 'Acte de mariage' }}
+              {% elif cr.doc_type == 'divorce' %}
+                <i class="fas fa-file-contract text-danger me-1"></i>{{ 'وثيقة طلاق' if lang=='ar' else 'Acte de divorce' }}
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'نوع الطلب' if lang=='ar' else 'Type de demande' }}</div>
+            <div>
+              {% if cr.request_type == 'new_certificate' %}{{ 'طلب شهادة جديدة' if lang=='ar' else 'Nouvelle attestation' }}
+              {% elif cr.request_type == 'reissue' %}{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+              {% else %}{{ 'تصحيح بيانات' if lang=='ar' else 'Correction' }}{% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'صلة القرابة' if lang=='ar' else 'Lien de parenté' }}</div>
+            <div>{{ cr.relationship or '—' }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'المركز' if lang=='ar' else 'Centre' }}</div>
+            <div>{{ cr.center.name_ar if cr.center and lang=='ar' else (cr.center.name_fr if cr.center else '—') }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
