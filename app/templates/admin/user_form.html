@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تعديل مستخدم' if edit else 'مستخدم جديد' }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:700px">
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-chad-blue text-white">
+      <h5 class="mb-0">
+        <i class="fas fa-user-plus me-2"></i>
+        {{ ('تعديل: ' + user.full_name) if edit else ('مستخدم جديد' if lang=='ar' else 'Nouvel utilisateur') }}
+      </h5>
+    </div>
+    <div class="card-body p-4">
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'اسم المستخدم' if lang=='ar' else 'Nom d\'utilisateur' }}</label>
+          <input type="text" name="username" class="form-control"
+                 value="{{ user.username if edit else '' }}" {{ 'readonly' if edit }} required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}</label>
+          <input type="text" name="full_name" class="form-control"
+                 value="{{ user.full_name if edit else '' }}" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'البريد الإلكتروني' if lang=='ar' else 'E-mail' }}</label>
+          <input type="email" name="email" class="form-control"
+                 value="{{ user.email if edit and user.email else '' }}">
+          <div class="form-text">
+            {{ 'يُستخدم لاستعادة كلمة المرور — يُفضّل تعبئته' if lang=='ar' else 'Utilisé pour la réinitialisation du mot de passe' }}
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'الدور' if lang=='ar' else 'Rôle' }}</label>
+          <select name="role" class="form-select" required>
+            <option value="officer" {{ 'selected' if edit and user.role=='officer' }}>موظف / Agent</option>
+            <option value="region_mgr" {{ 'selected' if edit and user.role=='region_mgr' }}>مدير منطقة / Responsable régional</option>
+            <option value="admin" {{ 'selected' if edit and user.role=='admin' }}>مدير / Admin</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'المركز' if lang=='ar' else 'Centre' }}</label>
+          <select name="center_id" class="form-select">
+            <option value="">— {{ 'بدون مركز' if lang=='ar' else 'Sans centre' }} —</option>
+            {% for c in centers %}
+            <option value="{{ c.id }}" {{ 'selected' if edit and user.center_id==c.id }}>
+              {{ c.name_ar }} ({{ c.code }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if not edit %}
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'كلمة المرور' if lang=='ar' else 'Mot de passe' }}</label>
+          <input type="password" name="password" class="form-control" required minlength="6">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ 'تأكيد كلمة المرور' if lang=='ar' else 'Confirmer' }}</label>
+          <input type="password" name="confirm_password" class="form-control" required minlength="6">
+        </div>
+        {% endif %}
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-chad-blue">
+            <i class="fas fa-save me-1"></i>
+            {{ 'حفظ' if lang=='ar' else 'Enregistrer' }}
+          </button>
+          <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+            {{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

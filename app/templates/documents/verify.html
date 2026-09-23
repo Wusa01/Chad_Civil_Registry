@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'التحقق من الوثيقة' if lang == 'ar' else 'Vérification du document' }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-7">
+
+        <div class="card border-0 shadow rounded-4">
+            <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-qrcode me-2"></i>
+                    {{ 'التحقق من صحة الوثيقة' if lang == 'ar' else 'Vérification de l\'authenticité' }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+
+                {% if valid %}
+                <!-- ✅ وثيقة صالحة -->
+                <div class="text-center mb-4">
+                    <div class="valid-icon mb-3">
+                        <i class="fas fa-check-circle fa-5x text-success"></i>
+                    </div>
+                    <h4 class="text-success fw-bold">
+                        {{ 'الوثيقة صالحة وموثوقة' if lang == 'ar' else 'Document valide et authentique' }}
+                    </h4>
+                    <p class="text-muted">
+                        {{ 'هذه الوثيقة صادرة رسمياً من نظام السجل المدني التشادي' if lang == 'ar'
+                           else 'Ce document est officiellement émis par le système d\'état civil tchadien' }}
+                    </p>
+                </div>
+
+                <!-- نوع الوثيقة -->
+                <div class="alert alert-success border-0 rounded-3 mb-4">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted d-block">
+                                {{ 'نوع الوثيقة' if lang == 'ar' else 'Type de document' }}
+                            </small>
+                            <strong>
+                                {% if document.doc_type == 'birth' %}
+                                    <i class="fas fa-baby me-1"></i>
+                                    {{ 'شهادة ميلاد' if lang == 'ar' else 'Acte de Naissance' }}
+                                {% elif document.doc_type == 'marriage' %}
+                                    <i class="fas fa-ring me-1"></i>
+                                    {{ 'عقد زواج' if lang == 'ar' else 'Acte de Mariage' }}
+                                {% elif document.doc_type == 'death' %}
+                                    <i class="fas fa-mosque me-1"></i>
+                                    {{ 'شهادة وفاة' if lang == 'ar' else 'Acte de Décès' }}
+                                {% endif %}
+                            </strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">
+                                {{ 'تاريخ الإصدار' if lang == 'ar' else 'Date d\'émission' }}
+                            </small>
+                            <strong>{{ document.issued_at.strftime('%Y-%m-%d') }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بيانات الوثيقة -->
+                <div class="card border-0 bg-light rounded-3 p-3">
+                    <h6 class="fw-bold mb-3">
+                        {{ 'بيانات الوثيقة' if lang == 'ar' else 'Détails du document' }}
+                    </h6>
+
+                    {% if document.doc_type == 'birth' %}
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td class="text-muted">{{ 'اسم المولود' if lang == 'ar' else 'Nom de l\'enfant' }}</td>
+                            <td class="fw-semibold">{{ record.child_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'تاريخ الميلاد' if lang == 'ar' else 'Date de naissance' }}</td>
+                            <td>{{ record.birth_date }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'مكان الميلاد' if lang == 'ar' else 'Lieu de naissance' }}</td>
+                            <td>{{ record.birth_place }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'رقم الشهادة' if lang == 'ar' else 'N° Acte' }}</td>
+                            <td class="font-monospace">{{ record.certificate_number }}</td>
+                        </tr>
+                    </table>
+
+                    {% elif document.doc_type == 'marriage' %}
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td class="text-muted">{{ 'الزوج' if lang == 'ar' else 'Époux' }}</td>
+                            <td class="fw-semibold">{{ record.husband_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'الزوجة' if lang == 'ar' else 'Épouse' }}</td>
+                            <td class="fw-semibold">{{ record.wife_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'تاريخ الزواج' if lang == 'ar' else 'Date du mariage' }}</td>
+                            <td>{{ record.marriage_date }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'رقم العقد' if lang == 'ar' else 'N° Acte' }}</td>
+                            <td class="font-monospace">{{ record.certificate_number }}</td>
+                        </tr>
+                    </table>
+
+                    {% elif document.doc_type == 'death' %}
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td class="text-muted">{{ 'اسم المتوفى' if lang == 'ar' else 'Nom du défunt' }}</td>
+                            <td class="fw-semibold">{{ record.deceased_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'تاريخ الوفاة' if lang == 'ar' else 'Date du décès' }}</td>
+                            <td>{{ record.death_date }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'مكان الوفاة' if lang == 'ar' else 'Lieu du décès' }}</td>
+                            <td>{{ record.death_place }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">{{ 'رقم الشهادة' if lang == 'ar' else 'N° Acte' }}</td>
+                            <td class="font-monospace">{{ record.certificate_number }}</td>
+                        </tr>
+                    </table>
+                    {% endif %}
+                </div>
+
+                {% else %}
+                <!-- ❌ وثيقة غير صالحة -->
+                <div class="text-center py-4">
+                    <i class="fas fa-times-circle fa-5x text-danger mb-3"></i>
+                    <h4 class="text-danger fw-bold">
+                        {{ 'الوثيقة غير صالحة' if lang == 'ar' else 'Document invalide' }}
+                    </h4>
+                    <p class="text-muted">
+                        {{ message if message else
+                           ('هذه الوثيقة غير موجودة أو ملغاة في النظام' if lang == 'ar'
+                            else 'Ce document n\'existe pas ou a été annulé') }}
+                    </p>
+                    <div class="alert alert-danger border-0 rounded-3 mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ 'تحذير: قد تكون هذه الوثيقة مزورة. يرجى التواصل مع أقرب مركز للحالة المدنية.' if lang == 'ar'
+                           else 'Avertissement: Ce document pourrait être falsifié. Veuillez contacter le centre d\'état civil le plus proche.' }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- زر الرجوع -->
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('citizen.portal') }}"
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>
+                        {{ 'العودة للبوابة' if lang == 'ar' else 'Retour au portail' }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

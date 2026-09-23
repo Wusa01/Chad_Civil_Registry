@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'إدخال كود التفعيل' if lang == 'ar' else 'Entrer le code' }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-lg border-0 rounded-4">
+
+            <div class="card-header bg-chad-blue text-white text-center py-4 rounded-top-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    {{ 'إعادة تعيين كلمة المرور' if lang == 'ar' else 'Réinitialiser le mot de passe' }}
+                </h5>
+            </div>
+
+            <div class="card-body p-4">
+                <p class="text-muted small mb-4">
+                    {{ 'أدخل الكود المكوَّن من 8 أرقام المُرسَل إلى بريدك الإلكتروني، وكلمة المرور الجديدة.'
+                       if lang == 'ar' else
+                       'Entrez le code à 8 chiffres envoyé à votre e-mail, et votre nouveau mot de passe.' }}
+                </p>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-hashtag me-1 text-chad-blue"></i>
+                            {{ 'كود التفعيل' if lang == 'ar' else 'Code de vérification' }}
+                        </label>
+                        <input type="text" name="code" class="form-control form-control-lg text-center"
+                               inputmode="numeric" pattern="\d{8}" maxlength="8"
+                               style="letter-spacing: .4em;" required autofocus>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ 'كلمة المرور الجديدة' if lang == 'ar' else 'Nouveau mot de passe' }}
+                        </label>
+                        <input type="password" name="new_password" class="form-control form-control-lg" minlength="6" required>
+                        <div class="form-text">
+                            {{ '6 أحرف على الأقل' if lang == 'ar' else 'Au moins 6 caractères' }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            {{ 'تأكيد كلمة المرور' if lang == 'ar' else 'Confirmer le mot de passe' }}
+                        </label>
+                        <input type="password" name="confirm_password" class="form-control form-control-lg" minlength="6" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-chad-blue btn-lg w-100 mb-3">
+                        <i class="fas fa-save me-2"></i>
+                        {{ 'تأكيد وحفظ' if lang == 'ar' else 'Confirmer' }}
+                    </button>
+
+                    <div class="text-center">
+                        <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none small">
+                            {{ 'لم يصلك الكود؟ اطلب كوداً جديداً' if lang == 'ar' else 'Code non reçu ? Redemander' }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,864 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'طلب جديد' if lang=='ar' else 'Nouvelle demande' }}{% endblock %}
+
+{% block content %}
+
+{% set doc_labels = {
+  'birth':    ('ميلاد','Naissance'),
+  'death':    ('وفاة','Décès'),
+  'marriage': ('زواج','Mariage'),
+  'divorce':  ('طلاق','Divorce')
+} %}
+{% set req_labels = {
+  'new_certificate': ('تسجيل واقعة جديدة','Nouvel enregistrement'),
+  'reissue':         ('إصدار نسخة من وثيقة','Réédition d\'acte'),
+  'correction':      ('تصحيح بيانات','Correction de données')
+} %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="fas fa-file-plus me-2 text-chad-blue"></i>
+    {{ req_labels[request_type][0] if lang=='ar' else req_labels[request_type][1] }}
+    —
+    {{ doc_labels[doc_type][0] if lang=='ar' else doc_labels[doc_type][1] }}
+  </h4>
+  <a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-arrow-right me-1"></i>{{ 'رجوع' if lang=='ar' else 'Retour' }}
+  </a>
+</div>
+
+<form method="POST">
+  <input type="hidden" name="doc_type"     value="{{ doc_type }}">
+  <input type="hidden" name="request_type" value="{{ request_type }}">
+
+  <div class="row g-4">
+
+    <!-- ══════════════════════════════════════════
+         بطاقة 1: معلومات الطلب
+    ══════════════════════════════════════════ -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-info-circle me-2"></i>
+            {{ 'معلومات الطلب' if lang=='ar' else 'Informations de la demande' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+
+            <!-- المركز -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">
+                {{ 'مركز الحالة المدنية' if lang=='ar' else 'Centre état civil' }}
+                <span class="text-danger">*</span>
+              </label>
+              <select name="center_id" class="form-select" required>
+                <option value="">— {{ 'اختر المركز' if lang=='ar' else 'Choisir' }} —</option>
+                {% for c in centers %}
+                <option value="{{ c.id }}">
+                  {{ c.name_ar if lang=='ar' else c.name_fr }} ({{ c.code }})
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- صلة القرابة -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">
+                {{ 'صلة القرابة بالشخص المعني' if lang=='ar' else 'Lien avec la personne concernée' }}
+                <span class="text-danger">*</span>
+              </label>
+              <select name="relationship" class="form-select" required>
+                <option value="">— {{ 'اختر' if lang=='ar' else 'Choisir' }} —</option>
+                <option value="self">{{ 'نفسي / صاحب الوثيقة' if lang=='ar' else 'Moi-même' }}</option>
+                <option value="father">{{ 'أب' if lang=='ar' else 'Père' }}</option>
+                <option value="mother">{{ 'أم' if lang=='ar' else 'Mère' }}</option>
+                <option value="son">{{ 'ابن' if lang=='ar' else 'Fils' }}</option>
+                <option value="daughter">{{ 'ابنة' if lang=='ar' else 'Fille' }}</option>
+                <option value="spouse">{{ 'زوج / زوجة' if lang=='ar' else 'Époux / Épouse' }}</option>
+                <option value="sibling">{{ 'أخ / أخت' if lang=='ar' else 'Frère / Sœur' }}</option>
+                <option value="legal_rep">{{ 'ممثل قانوني' if lang=='ar' else 'Représentant légal' }}</option>
+                <option value="other">{{ 'أخرى' if lang=='ar' else 'Autre' }}</option>
+              </select>
+            </div>
+
+            <!-- رقم الشهادة — يظهر فقط عند reissue أو correction -->
+            {% if request_type in ['reissue', 'correction'] %}
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">
+                {{ 'رقم الشهادة / الوثيقة الأصلية' if lang=='ar' else 'N° de l\'acte original' }}
+              </label>
+              <input type="text" name="ref_certificate_number"
+                     class="form-control font-monospace text-uppercase"
+                     placeholder="{{ {
+                       'birth':    'BIRTH-2024-NDJ001-00001',
+                       'marriage': 'MARIAGE-2024-NDJ001-00001',
+                       'death':    'DECES-2024-NDJ001-00001',
+                       'divorce':  'DIVORCE-2024-NDJ001-00001'
+                     }[doc_type] }}"
+                     oninput="this.value=this.value.toUpperCase()">
+              <div class="form-text">
+                {{ 'اتركه فارغاً إن لم تعرفه وسيتحقق الموظف' if lang=='ar' else 'Laisser vide si inconnu; l\'agent vérifiera' }}
+              </div>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         بطاقات الوثيقة حسب النوع
+    ══════════════════════════════════════════ -->
+
+    {# =========== ميلاد =========== #}
+    {% if doc_type == 'birth' %}
+
+    <!-- بيانات المولود -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-blue-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold text-chad-blue">
+            <i class="fas fa-baby me-2"></i>
+            {{ 'بيانات المولود' if lang=='ar' else 'Informations sur l\'enfant' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="child_full_name" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">{{ 'الجنس' if lang=='ar' else 'Sexe' }} <span class="text-danger">*</span></label>
+              <select name="child_gender" class="form-select" required>
+                <option value="M">{{ 'ذكر' if lang=='ar' else 'Masculin' }}</option>
+                <option value="F">{{ 'أنثى' if lang=='ar' else 'Féminin' }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">{{ 'تاريخ الولادة' if lang=='ar' else 'Date de naissance' }} <span class="text-danger">*</span></label>
+              <input type="date" name="birth_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الولادة' if lang=='ar' else 'Lieu de naissance' }} <span class="text-danger">*</span></label>
+              <input type="text" name="birth_place" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date d\'enregistrement' }} <span class="text-danger">*</span></label>
+              <input type="date" name="registration_date" class="form-control"
+                     value="{{ today }}" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الأب والأم -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-male me-2 text-primary"></i>
+            {{ 'بيانات الأب' if lang=='ar' else 'Informations sur le père' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="father_full_name" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+              <input type="text" name="father_profession" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date de naissance' }} <span class="text-muted small">({{ 'اختياري' if lang=='ar' else 'optionnel' }})</span></label>
+              <input type="date" name="father_birth_date" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu de naissance' }} <span class="text-muted small">({{ 'اختياري' if lang=='ar' else 'optionnel' }})</span></label>
+              <input type="text" name="father_birth_place" class="form-control">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-female me-2 text-danger"></i>
+            {{ 'بيانات الأم' if lang=='ar' else 'Informations sur la mère' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="mother_full_name" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+              <input type="text" name="mother_profession" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date de naissance' }} <span class="text-muted small">({{ 'اختياري' if lang=='ar' else 'optionnel' }})</span></label>
+              <input type="date" name="mother_birth_date" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu de naissance' }} <span class="text-muted small">({{ 'اختياري' if lang=='ar' else 'optionnel' }})</span></label>
+              <input type="text" name="mother_birth_place" class="form-control">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- شهود الميلاد -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-users me-2 text-chad-blue"></i>
+            {{ 'شهود الواقعة' if lang=='ar' else 'Témoins de l\'événement' }}
+            <span class="badge bg-warning text-dark ms-2 fw-normal" style="font-size:11px">
+              {{ 'ضمان قانوني' if lang=='ar' else 'Garantie légale' }}
+            </span>
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="alert alert-warning border-0 rounded-3 py-2 mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <small>
+              {% if lang=='ar' %}
+                بيانات الشهود تُستخدم للتحقق من صحة الواقعة. في حالة ثبوت خطأ في البيانات يمكن مساءلة الشهود قانونياً عبر رقم هويتهم.
+              {% else %}
+                Les données des témoins servent à vérifier l'authenticité de l'événement. En cas d'inexactitude, les témoins peuvent être poursuivis via leur numéro d'identité.
+              {% endif %}
+            </small>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الأول' if lang=='ar' else 'Témoin 1 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_name" class="form-control"
+                     placeholder="{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هوية الشاهد الأول' if lang=='ar' else 'Témoin 1 — N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_id" class="form-control"
+                     placeholder="{{ 'رقم البطاقة الوطنية' if lang=='ar' else 'N° carte nationale' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته بالمولود' if lang=='ar' else 'Lien avec l\'enfant' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_relation" class="form-control"
+                     placeholder="{{ 'جار، قريب، ...' if lang=='ar' else 'Voisin, parent, ...' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الثاني' if lang=='ar' else 'Témoin 2 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_name" class="form-control"
+                     placeholder="{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هوية الشاهد الثاني' if lang=='ar' else 'Témoin 2 — N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_id" class="form-control"
+                     placeholder="{{ 'رقم البطاقة الوطنية' if lang=='ar' else 'N° carte nationale' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته بالمولود' if lang=='ar' else 'Lien avec l\'enfant' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_relation" class="form-control"
+                     placeholder="{{ 'جار، قريب، ...' if lang=='ar' else 'Voisin, parent, ...' }}" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# =========== وفاة =========== #}
+    {% elif doc_type == 'death' %}
+
+    <!-- بيانات المتوفى -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-mosque me-2 text-secondary"></i>
+            {{ 'بيانات المتوفى' if lang=='ar' else 'Informations sur le défunt' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="deceased_full_name" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">{{ 'الجنس' if lang=='ar' else 'Sexe' }} <span class="text-danger">*</span></label>
+              <select name="deceased_gender" class="form-select" required>
+                <option value="M">{{ 'ذكر' if lang=='ar' else 'Masculin' }}</option>
+                <option value="F">{{ 'أنثى' if lang=='ar' else 'Féminin' }}</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">{{ 'العمر تقريباً' if lang=='ar' else 'Âge approximatif' }}</label>
+              <input type="number" name="deceased_age" class="form-control" min="0" max="150">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الوفاة' if lang=='ar' else 'Date du décès' }} <span class="text-danger">*</span></label>
+              <input type="date" name="death_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date d\'enregistrement' }} <span class="text-danger">*</span></label>
+              <input type="date" name="registration_date" class="form-control"
+                     value="{{ today }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الوفاة' if lang=='ar' else 'Lieu du décès' }} <span class="text-danger">*</span></label>
+              <input type="text" name="death_place" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'نوع مكان الوفاة' if lang=='ar' else 'Type de lieu' }} <span class="text-danger">*</span></label>
+              <select name="death_place_type" class="form-select" required>
+                <option value="">— {{ 'اختر' if lang=='ar' else 'Choisir' }} —</option>
+                <option value="home">{{ 'منزل' if lang=='ar' else 'Domicile' }}</option>
+                <option value="hospital">{{ 'مستشفى' if lang=='ar' else 'Hôpital' }}</option>
+                <option value="public">{{ 'مكان عام' if lang=='ar' else 'Lieu public' }}</option>
+                <option value="other">{{ 'أخرى' if lang=='ar' else 'Autre' }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'سبب الوفاة' if lang=='ar' else 'Cause du décès' }} <span class="text-danger">*</span></label>
+              <input type="text" name="cause_of_death" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'اسم المُشهِّد / الطبيب' if lang=='ar' else 'Nom du certificateur' }} <span class="text-danger">*</span></label>
+              <input type="text" name="certifier_name" class="form-control"
+                     placeholder="{{ 'اسم الطبيب أو المسؤول الذي أثبت الوفاة' if lang=='ar' else 'Médecin ou responsable ayant constaté le décès' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'محل الإقامة المعتاد' if lang=='ar' else 'Résidence habituelle' }} <span class="text-danger">*</span></label>
+              <input type="text" name="usual_residence" class="form-control" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- شهود الوفاة -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-users me-2 text-chad-blue"></i>
+            {{ 'شهود الواقعة' if lang=='ar' else 'Témoins de l\'événement' }}
+            <span class="badge bg-warning text-dark ms-2 fw-normal" style="font-size:11px">
+              {{ 'ضمان قانوني' if lang=='ar' else 'Garantie légale' }}
+            </span>
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="alert alert-warning border-0 rounded-3 py-2 mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <small>
+              {% if lang=='ar' %}
+                بيانات الشهود تُستخدم للتحقق من صحة الواقعة. في حالة ثبوت خطأ في البيانات يمكن مساءلة الشهود قانونياً عبر رقم هويتهم.
+              {% else %}
+                Les données des témoins servent à vérifier l'authenticité de l'événement. En cas d'inexactitude, les témoins peuvent être poursuivis via leur numéro d'identité.
+              {% endif %}
+            </small>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الأول' if lang=='ar' else 'Témoin 1 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_name" class="form-control"
+                     placeholder="{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هوية الشاهد الأول' if lang=='ar' else 'Témoin 1 — N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_id" class="form-control"
+                     placeholder="{{ 'رقم البطاقة الوطنية' if lang=='ar' else 'N° carte nationale' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته بالمتوفى' if lang=='ar' else 'Lien avec le défunt' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_relation" class="form-control"
+                     placeholder="{{ 'ابن، زوجة، جار، ...' if lang=='ar' else 'Fils, épouse, voisin, ...' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الثاني' if lang=='ar' else 'Témoin 2 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_name" class="form-control"
+                     placeholder="{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هوية الشاهد الثاني' if lang=='ar' else 'Témoin 2 — N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_id" class="form-control"
+                     placeholder="{{ 'رقم البطاقة الوطنية' if lang=='ar' else 'N° carte nationale' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته بالمتوفى' if lang=='ar' else 'Lien avec le défunt' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_relation" class="form-control"
+                     placeholder="{{ 'ابن، زوجة، جار، ...' if lang=='ar' else 'Fils, épouse, voisin, ...' }}" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# =========== زواج =========== #}
+    {% elif doc_type == 'marriage' %}
+
+    <!-- بيانات الزوج -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-male me-2 text-primary"></i>
+            {{ 'بيانات الزوج' if lang=='ar' else 'Informations sur l\'époux' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_full_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date de naissance' }} <span class="text-danger">*</span></label>
+              <input type="date" name="husband_birth_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu de naissance' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_birth_place" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_profession" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_nationality" class="form-control"
+                     value="{{ 'تشادي' if lang=='ar' else 'Tchadienne' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_id_number" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'اسم الأب' if lang=='ar' else 'Nom du père' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_father_name" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'اسم الأم' if lang=='ar' else 'Nom de la mère' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_mother_name" class="form-control" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الزوجة -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-female me-2 text-danger"></i>
+            {{ 'بيانات الزوجة' if lang=='ar' else 'Informations sur l\'épouse' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_full_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date de naissance' }} <span class="text-danger">*</span></label>
+              <input type="date" name="wife_birth_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu de naissance' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_birth_place" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_profession" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_nationality" class="form-control"
+                     value="{{ 'تشادية' if lang=='ar' else 'Tchadienne' }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_id_number" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'اسم الأب' if lang=='ar' else 'Nom du père' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_father_name" class="form-control" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'اسم الأم' if lang=='ar' else 'Nom de la mère' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_mother_name" class="form-control" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات عقد الزواج -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-ring me-2 text-success"></i>
+            {{ 'بيانات عقد الزواج' if lang=='ar' else 'Détails du contrat de mariage' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'تاريخ الزواج' if lang=='ar' else 'Date du mariage' }} <span class="text-danger">*</span></label>
+              <input type="date" name="marriage_date" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date d\'enregistrement' }} <span class="text-danger">*</span></label>
+              <input type="date" name="registration_date" class="form-control"
+                     value="{{ today }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'مكان الزواج' if lang=='ar' else 'Lieu du mariage' }} <span class="text-danger">*</span></label>
+              <input type="text" name="marriage_place" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'نوع الزواج' if lang=='ar' else 'Type de mariage' }} <span class="text-danger">*</span></label>
+              <select name="marriage_type" class="form-select" required>
+                <option value="monogamy">{{ 'زواج أحادي' if lang=='ar' else 'Monogame' }}</option>
+                <option value="polygamy">{{ 'تعدد زوجات' if lang=='ar' else 'Polygame' }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'المهر' if lang=='ar' else 'Dot (montant)' }}</label>
+              <input type="number" name="dowry_amount" class="form-control" min="0" step="0.01"
+                     placeholder="0.00">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" name="age_dispensation"
+                       id="age_dispensation" value="1">
+                <label class="form-check-label fw-semibold" for="age_dispensation">
+                  {{ 'استثناء سني' if lang=='ar' else 'Dispense d\'âge' }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- شهود الزواج -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-users me-2 text-chad-blue"></i>
+            {{ 'شهود عقد الزواج' if lang=='ar' else 'Témoins du mariage' }}
+            <span class="badge bg-warning text-dark ms-2 fw-normal" style="font-size:11px">
+              {{ 'ضمان قانوني' if lang=='ar' else 'Garantie légale' }}
+            </span>
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="alert alert-warning border-0 rounded-3 py-2 mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <small>
+              {% if lang=='ar' %}
+                بيانات الشهود تُستخدم للتحقق من صحة عقد الزواج. في حالة ثبوت خطأ يمكن مساءلة الشهود قانونياً.
+              {% else %}
+                Les données des témoins servent à vérifier l'authenticité du mariage. En cas d'inexactitude, ils peuvent être poursuivis.
+              {% endif %}
+            </small>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الأول' if lang=='ar' else 'Témoin 1 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_name" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هويته' if lang=='ar' else 'Témoin 1 — N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_id" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته' if lang=='ar' else 'Lien' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_relation" class="form-control"
+                     placeholder="{{ 'أخ الزوج، عم الزوجة، ...' if lang=='ar' else 'Frère du marié, oncle, ...' }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الثاني' if lang=='ar' else 'Témoin 2 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_name" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هويته' if lang=='ar' else 'Témoin 2 — N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_id" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته' if lang=='ar' else 'Lien' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_relation" class="form-control"
+                     placeholder="{{ 'أخ الزوج، عم الزوجة، ...' if lang=='ar' else 'Frère du marié, oncle, ...' }}" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# =========== طلاق =========== #}
+    {% elif doc_type == 'divorce' %}
+
+    <!-- بيانات الطلاق -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-file-contract me-2 text-danger"></i>
+            {{ 'بيانات وثيقة الطلاق' if lang=='ar' else 'Données de l\'acte de divorce' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'تاريخ الطلاق' if lang=='ar' else 'Date du divorce' }} <span class="text-danger">*</span></label>
+              <input type="date" name="divorce_date" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date d\'enregistrement' }} <span class="text-danger">*</span></label>
+              <input type="date" name="registration_date" class="form-control"
+                     value="{{ today }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'مكان الطلاق' if lang=='ar' else 'Lieu du divorce' }} <span class="text-danger">*</span></label>
+              <input type="text" name="divorce_place" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'نوع الطلاق' if lang=='ar' else 'Type de divorce' }} <span class="text-danger">*</span></label>
+              <select name="divorce_type" class="form-select" required>
+                <option value="mutual">{{ 'بالتراضي' if lang=='ar' else 'Mutuel' }}</option>
+                <option value="judicial">{{ 'قضائي' if lang=='ar' else 'Judiciaire' }}</option>
+                <option value="unilateral">{{ 'أحادي الجانب' if lang=='ar' else 'Unilatéral' }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم قرار المحكمة' if lang=='ar' else 'N° décision tribunal' }}</label>
+              <input type="text" name="court_decision_number" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم المحكمة' if lang=='ar' else 'Nom du tribunal' }}</label>
+              <input type="text" name="court_name" class="form-control">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم عقد الزواج الأصلي' if lang=='ar' else 'N° acte de mariage' }}</label>
+              <input type="text" name="marriage_cert_number" class="form-control font-monospace"
+                     placeholder="MARIAGE-2024-NDJ001-00001"
+                     oninput="this.value=this.value.toUpperCase()">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'عدد الأطفال' if lang=='ar' else 'Nombre d\'enfants' }}</label>
+              <input type="number" name="children_count" class="form-control" min="0" value="0">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'قرار الحضانة' if lang=='ar' else 'Décision de garde' }}</label>
+              <input type="text" name="custody_decision" class="form-control"
+                     placeholder="{{ 'الأم / الأب / مشتركة' if lang=='ar' else 'Mère / Père / Partagée' }}">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الزوج عند الطلاق -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-male me-2 text-primary"></i>
+            {{ 'بيانات الزوج' if lang=='ar' else 'Informations sur l\'époux' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_full_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date naissance' }} <span class="text-danger">*</span></label>
+              <input type="date" name="husband_birth_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu naissance' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_birth_place" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_profession" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_nationality" class="form-control"
+                     value="{{ 'تشادي' if lang=='ar' else 'Tchadienne' }}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="husband_id_number" class="form-control" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- بيانات الزوجة عند الطلاق -->
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-female me-2 text-danger"></i>
+            {{ 'بيانات الزوجة' if lang=='ar' else 'Informations sur l\'épouse' }}
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_full_name" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date naissance' }} <span class="text-danger">*</span></label>
+              <input type="date" name="wife_birth_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu naissance' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_birth_place" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_profession" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_nationality" class="form-control"
+                     value="{{ 'تشادية' if lang=='ar' else 'Tchadienne' }}" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="wife_id_number" class="form-control" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- شهود الطلاق -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light rounded-top-4 py-3">
+          <h6 class="mb-0 fw-bold">
+            <i class="fas fa-users me-2 text-chad-blue"></i>
+            {{ 'شهود الواقعة' if lang=='ar' else 'Témoins de l\'événement' }}
+            <span class="badge bg-warning text-dark ms-2 fw-normal" style="font-size:11px">
+              {{ 'ضمان قانوني' if lang=='ar' else 'Garantie légale' }}
+            </span>
+          </h6>
+        </div>
+        <div class="card-body p-4">
+          <div class="alert alert-warning border-0 rounded-3 py-2 mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <small>
+              {% if lang=='ar' %}
+                بيانات الشهود تُستخدم للتحقق من صحة الواقعة. في حالة ثبوت خطأ يمكن مساءلة الشهود قانونياً.
+              {% else %}
+                Les données des témoins servent à vérifier l'authenticité. En cas d'inexactitude, ils peuvent être poursuivis.
+              {% endif %}
+            </small>
+          </div>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الأول' if lang=='ar' else 'Témoin 1 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_name" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هويته' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_id" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته' if lang=='ar' else 'Lien' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness1_relation" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'اسم الشاهد الثاني' if lang=='ar' else 'Témoin 2 — Nom' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_name" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'رقم هويته' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_id" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">{{ 'صلة قرابته' if lang=='ar' else 'Lien' }} <span class="text-danger">*</span></label>
+              <input type="text" name="witness2_relation" class="form-control" required>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════
+         ضابط الحالة المدنية + ملاحظات
+    ══════════════════════════════════════════ -->
+    <div class="col-12">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">
+                {{ 'ضابط الحالة المدنية' if lang=='ar' else 'Officier d\'état civil' }}
+                <span class="text-danger">*</span>
+              </label>
+              <input type="text" name="civil_officer" class="form-control"
+                     placeholder="{{ 'اسم الموظف المسؤول' if lang=='ar' else 'Nom de l\'officier responsable' }}"
+                     required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">
+                {{ 'ملاحظات إضافية' if lang=='ar' else 'Notes supplémentaires' }}
+              </label>
+              <textarea name="notes" class="form-control" rows="1"
+                        placeholder="{{ 'أي معلومات إضافية تساعد في معالجة الطلب' if lang=='ar' else 'Informations supplémentaires utiles' }}"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- تنبيه + أزرار -->
+    <div class="col-12">
+      <div class="alert alert-info rounded-4 border-0 mb-3">
+        <i class="fas fa-info-circle me-2"></i>
+        {{ 'سيتم إرسال طلبك للمركز المختار. بعد المراجعة ستظهر النتيجة في لوحة التحكم.' if lang=='ar'
+           else 'Votre demande sera transmise au centre sélectionné. Le résultat apparaîtra dans votre tableau de bord.' }}
+      </div>
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="{{ url_for('citizen.dashboard') }}" class="btn btn-outline-secondary px-4">
+          <i class="fas fa-times me-2"></i>{{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+        </a>
+        <button type="submit" class="btn btn-chad-blue px-4 fw-bold">
+          <i class="fas fa-paper-plane me-2"></i>
+          {{ 'إرسال الطلب' if lang=='ar' else 'Envoyer la demande' }}
+        </button>
+      </div>
+    </div>
+
+  </div><!-- end row -->
+</form>
+{% endblock %}

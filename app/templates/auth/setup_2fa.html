@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'إعداد التحقق بخطوتين' if lang == 'ar' else 'Configuration 2FA' }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:620px">
+
+  <!-- رأس الصفحة -->
+  <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+    <div class="card-header bg-chad-blue text-white text-center py-4">
+      <i class="fas fa-shield-alt fa-3x mb-2 opacity-75"></i>
+      <h4 class="fw-bold mb-1">
+        {{ 'إعداد التحقق بخطوتين' if lang == 'ar' else 'Configuration double authentification' }}
+      </h4>
+      <p class="mb-0 opacity-75 small">
+        {{ 'حماية إضافية لحسابك الحكومي' if lang == 'ar' else 'Protection supplémentaire pour votre compte' }}
+      </p>
+    </div>
+
+    <div class="card-body p-4">
+
+      {% if current_user.totp_enabled %}
+      <!-- ── الحالة: مُفعَّل ── -->
+      <div class="alert alert-success rounded-3 d-flex align-items-center gap-3">
+        <i class="fas fa-check-circle fa-2x"></i>
+        <div>
+          <strong>{{ 'التحقق بخطوتين مفعَّل' if lang == 'ar' else '2FA activé' }}</strong><br>
+          <small>{{ 'حسابك محمي بطبقة أمان إضافية' if lang == 'ar' else 'Votre compte est protégé' }}</small>
+        </div>
+      </div>
+
+      <!-- تعطيل 2FA -->
+      <div class="card border-danger mt-3">
+        <div class="card-body">
+          <h6 class="text-danger fw-bold">
+            <i class="fas fa-times-circle me-1"></i>
+            {{ 'تعطيل التحقق بخطوتين' if lang == 'ar' else 'Désactiver 2FA' }}
+          </h6>
+          <form method="POST" action="{{ url_for('auth.disable_2fa') }}">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">
+                {{ 'أدخل كلمة المرور للتأكيد' if lang == 'ar' else 'Entrez votre mot de passe' }}
+              </label>
+              <input type="password" name="password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-outline-danger btn-sm"
+                    onclick="return confirm('{{ 'هل أنت متأكد من تعطيل 2FA؟' if lang == 'ar' else 'Désactiver 2FA ?' }}')">
+              <i class="fas fa-lock-open me-1"></i>
+              {{ 'تعطيل' if lang == 'ar' else 'Désactiver' }}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% else %}
+      <!-- ── الحالة: غير مُفعَّل → خطوات الإعداد ── -->
+
+      <!-- الخطوة 1: تحميل التطبيق -->
+      <div class="d-flex gap-3 mb-4 p-3 bg-light rounded-3">
+        <div class="rounded-circle bg-chad-blue text-white d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:40px;height:40px;font-weight:bold">1</div>
+        <div>
+          <strong>{{ 'حمّل تطبيق المصادقة' if lang == 'ar' else 'Téléchargez une application d\'authentification' }}</strong>
+          <p class="mb-0 text-muted small mt-1">
+            {{ 'مثل: Google Authenticator أو Microsoft Authenticator أو Authy' if lang == 'ar'
+               else 'Ex: Google Authenticator, Microsoft Authenticator ou Authy' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- الخطوة 2: مسح QR -->
+      <div class="d-flex gap-3 mb-4">
+        <div class="rounded-circle bg-chad-blue text-white d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:40px;height:40px;font-weight:bold">2</div>
+        <div class="w-100">
+          <strong>{{ 'امسح رمز QR بالتطبيق' if lang == 'ar' else 'Scannez le QR code avec l\'application' }}</strong>
+          <div class="text-center my-3 p-3 bg-white border rounded-3 d-inline-block">
+            <img src="data:image/png;base64,{{ qr_b64 }}"
+                 alt="QR Code 2FA" style="width:180px;height:180px">
+          </div>
+          <!-- المفتاح اليدوي -->
+          <div class="mt-2">
+            <p class="text-muted small mb-1">
+              {{ 'أو أدخل هذا المفتاح يدوياً:' if lang == 'ar' else 'Ou entrez cette clé manuellement:' }}
+            </p>
+            <div class="input-group input-group-sm">
+              <input type="text" id="secretKey" class="form-control font-monospace text-center fw-bold"
+                     value="{{ totp_secret }}" readonly>
+              <button class="btn btn-outline-secondary" type="button"
+                      onclick="navigator.clipboard.writeText('{{ totp_secret }}');this.textContent='✔'">
+                {{ 'نسخ' if lang == 'ar' else 'Copier' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- الخطوة 3: إدخال الرمز -->
+      <div class="d-flex gap-3 mb-3">
+        <div class="rounded-circle bg-chad-blue text-white d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:40px;height:40px;font-weight:bold">3</div>
+        <div class="w-100">
+          <strong>{{ 'أدخل الرمز المكوَّن من 6 أرقام للتأكيد' if lang == 'ar' else 'Entrez le code à 6 chiffres pour confirmer' }}</strong>
+          <form method="POST" class="mt-2">
+            <div class="input-group">
+              <input type="text" name="otp_code"
+                     class="form-control form-control-lg text-center fw-bold fs-4"
+                     placeholder="000000" maxlength="6" pattern="\d{6}"
+                     autocomplete="one-time-code" inputmode="numeric" required autofocus>
+              <button type="submit" class="btn btn-chad-blue btn-lg px-4">
+                <i class="fas fa-check me-1"></i>
+                {{ 'تفعيل' if lang == 'ar' else 'Activer' }}
+              </button>
+            </div>
+            <div class="form-text text-center mt-2 text-muted">
+              {{ 'يتجدد الرمز كل 30 ثانية' if lang == 'ar' else 'Le code se renouvelle toutes les 30 secondes' }}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+    <div class="card-footer bg-light text-center py-3">
+      <a href="{{ url_for('auth.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-right me-1"></i>
+        {{ 'العودة للوحة التحكم' if lang == 'ar' else 'Retour au tableau de bord' }}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

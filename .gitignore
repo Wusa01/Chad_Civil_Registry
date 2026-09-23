@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# بيئات افتراضية
+venv/
+.venv/
+env/
+
+# متغيرات البيئة (أسرار: بريد، مفاتيح، إلخ)
+.env
+
+# قواعد البيانات ونسخ الاحتياط — لا يجب رفعها أبداً
+instance/
+*.db
+*.sqlite
+*.sqlite3
+backups/
+
+# ملفات النظام والمحررات
+.DS_Store
+*.log
+.idea/
+.vscode/

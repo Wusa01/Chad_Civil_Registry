@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تتبع طلب' if lang=='ar' else 'Suivi de demande' }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-8 col-lg-6">
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-header bg-chad-blue text-white text-center py-4 rounded-top-4">
+        <i class="fas fa-search fa-2x mb-2 opacity-75"></i>
+        <h5 class="mb-0 fw-bold">{{ 'تتبع طلبك' if lang=='ar' else 'Suivi de votre demande' }}</h5>
+        <p class="mb-0 opacity-75 small mt-1">{{ 'أدخل رقم طلبك للاستعلام عن حالته' if lang=='ar' else 'Entrez votre numéro de demande' }}</p>
+      </div>
+      <div class="card-body p-4">
+        <form method="POST">
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="fas fa-hashtag me-1 text-chad-blue"></i>
+              {{ 'رقم الطلب أو رمز QR' if lang=='ar' else 'N° de demande ou QR Code' }}
+            </label>
+            <input type="text" name="tracking_code" class="form-control form-control-lg text-center"
+                   placeholder="{{ 'BIRTH-2026-NDJ001-00001' if lang=='ar' else 'BIRTH-2026-NDJ001-00001' }}"
+                   value="{{ request.form.get('tracking_code', '') }}" required autofocus>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-chad-blue btn-lg">
+              <i class="fas fa-search me-2"></i>
+              {{ 'بحث' if lang=='ar' else 'Rechercher' }}
+            </button>
+          </div>
+        </form>
+
+        {% if result %}
+        <hr class="my-4">
+        {% if result.valid %}
+        <div class="alert alert-success rounded-3">
+          <div class="d-flex align-items-center mb-2">
+            <i class="fas fa-check-circle fa-2x me-3"></i>
+            <div>
+              <div class="fw-bold">{{ 'وثيقة صالحة ✓' if lang=='ar' else 'Document valide ✓' }}</div>
+              <div class="small">{{ result.message if result.message else '' }}</div>
+            </div>
+          </div>
+          <hr>
+          <div class="row g-2 small">
+            <div class="col-6">
+              <span class="text-muted">{{ 'نوع الوثيقة:' if lang=='ar' else 'Type:' }}</span>
+              <span class="fw-bold ms-1">
+                {% if result.doc_type == 'birth' %}{{ 'شهادة ميلاد' if lang=='ar' else 'Acte de naissance' }}
+                {% elif result.doc_type == 'marriage' %}{{ 'عقد زواج' if lang=='ar' else 'Acte de mariage' }}
+                {% elif result.doc_type == 'death' %}{{ 'شهادة وفاة' if lang=='ar' else 'Acte de décès' }}{% endif %}
+              </span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted">{{ 'الاسم:' if lang=='ar' else 'Nom:' }}</span>
+              <span class="fw-bold ms-1">{{ result.name }}</span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted">{{ 'تاريخ الإصدار:' if lang=='ar' else 'Émis le:' }}</span>
+              <span class="ms-1">{{ result.issued_at.strftime('%Y-%m-%d') if result.issued_at else '—' }}</span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted">{{ 'المركز:' if lang=='ar' else 'Centre:' }}</span>
+              <span class="ms-1">{{ result.center.name_ar if result.center and lang=='ar' else (result.center.name_fr if result.center else '—') }}</span>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="alert alert-danger rounded-3">
+          <i class="fas fa-times-circle me-2"></i>
+          <strong>{{ 'وثيقة غير صالحة' if lang=='ar' else 'Document invalide' }}</strong>
+          <div class="small mt-1">{{ result.message }}</div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+      </div>
+    </div>
+
+    <div class="text-center mt-3">
+      <a href="{{ url_for('citizen.portal') }}" class="text-muted small">
+        <i class="fas fa-arrow-right me-1"></i>
+        {{ 'العودة للبوابة' if lang=='ar' else 'Retour au portail' }}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

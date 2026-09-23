@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'النسخ الاحتياطية' if lang == 'ar' else 'Sauvegardes' }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- رأس الصفحة -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3 class="fw-bold text-chad-blue mb-0">
+      <i class="fas fa-database me-2"></i>
+      {{ 'إدارة النسخ الاحتياطية' if lang == 'ar' else 'Gestion des sauvegardes' }}
+    </h3>
+    <a href="{{ url_for('admin.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-right me-1"></i>
+      {{ 'الإدارة' if lang == 'ar' else 'Administration' }}
+    </a>
+  </div>
+
+  <!-- ══ إحصاءات قاعدة البيانات ══ -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+      <i class="fas fa-chart-bar me-2"></i>
+      {{ 'إحصاءات قاعدة البيانات الحالية' if lang == 'ar' else 'État actuel de la base de données' }}
+      <span class="badge bg-warning text-dark ms-2">
+        {{ db_stats.get('_db_size_kb', 0) }} KB
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
+        <div class="col-6 col-md-2">
+          <div class="text-center p-3 bg-light rounded-3">
+            <i class="fas fa-baby text-chad-blue mb-1"></i>
+            <div class="fw-bold fs-5">{{ db_stats.get('births', 0) }}</div>
+            <div class="text-muted small">{{ 'مواليد' if lang == 'ar' else 'Naissances' }}</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <div class="text-center p-3 bg-light rounded-3">
+            <i class="fas fa-ring text-success mb-1"></i>
+            <div class="fw-bold fs-5">{{ db_stats.get('marriages', 0) }}</div>
+            <div class="text-muted small">{{ 'زيجات' if lang == 'ar' else 'Mariages' }}</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <div class="text-center p-3 bg-light rounded-3">
+            <i class="fas fa-mosque text-danger mb-1"></i>
+            <div class="fw-bold fs-5">{{ db_stats.get('deaths', 0) }}</div>
+            <div class="text-muted small">{{ 'وفيات' if lang == 'ar' else 'Décès' }}</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <div class="text-center p-3 bg-light rounded-3">
+            <i class="fas fa-file-alt text-warning mb-1"></i>
+            <div class="fw-bold fs-5">{{ db_stats.get('divorces', 0) }}</div>
+            <div class="text-muted small">{{ 'طلاق' if lang == 'ar' else 'Divorces' }}</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <div class="text-center p-3 bg-light rounded-3">
+            <i class="fas fa-users text-chad-blue mb-1"></i>
+            <div class="fw-bold fs-5">{{ db_stats.get('users', 0) }}</div>
+            <div class="text-muted small">{{ 'مستخدمون' if lang == 'ar' else 'Utilisateurs' }}</div>
+          </div>
+        </div>
+
+        <div class="col-6 col-md-2">
+          <div class="text-center p-3 bg-light rounded-3">
+            <i class="fas fa-file-pdf text-secondary mb-1"></i>
+            <div class="fw-bold fs-5">{{ db_stats.get('documents', 0) }}</div>
+            <div class="text-muted small">{{ 'وثائق' if lang == 'ar' else 'Documents' }}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ أزرار التحميل ══ -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white fw-bold py-3 border-bottom">
+      <i class="fas fa-download me-2 text-chad-blue"></i>
+      {{ 'تحميل نسخة احتياطية' if lang == 'ar' else 'Télécharger une sauvegarde' }}
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+
+        <!-- نسخة .db -->
+        <div class="col-md-4">
+          <div class="card border-primary h-100">
+            <div class="card-body text-center p-4">
+              <i class="fas fa-database fa-3x text-primary mb-3"></i>
+              <h6 class="fw-bold">
+                {{ 'قاعدة البيانات الكاملة' if lang == 'ar' else 'Base de données complète' }}
+              </h6>
+              <p class="text-muted small mb-3">
+                {{ 'ملف .db — الأسرع والأكثر موثوقية' if lang == 'ar' else 'Fichier .db — Rapide et fiable' }}
+              </p>
+              <a href="{{ url_for('backup.download_db') }}"
+                 class="btn btn-primary w-100">
+                <i class="fas fa-download me-2"></i>
+                {{ 'تحميل .db' if lang == 'ar' else 'Télécharger .db' }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- نسخة JSON -->
+        <div class="col-md-4">
+          <div class="card border-success h-100">
+            <div class="card-body text-center p-4">
+              <i class="fas fa-file-code fa-3x text-success mb-3"></i>
+              <h6 class="fw-bold">
+                {{ 'تصدير JSON' if lang == 'ar' else 'Export JSON' }}
+              </h6>
+              <p class="text-muted small mb-3">
+                {{ 'جميع الجداول بصيغة JSON داخل ZIP' if lang == 'ar' else 'Toutes les tables en JSON compressé' }}
+              </p>
+              <a href="{{ url_for('backup.download_json') }}"
+                 class="btn btn-success w-100">
+                <i class="fas fa-download me-2"></i>
+                {{ 'تحميل JSON' if lang == 'ar' else 'Télécharger JSON' }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- نسخة ZIP كاملة -->
+        <div class="col-md-4">
+          <div class="card border-warning h-100">
+            <div class="card-body text-center p-4">
+              <i class="fas fa-file-archive fa-3x text-warning mb-3"></i>
+              <h6 class="fw-bold">
+                {{ 'نسخة شاملة ZIP' if lang == 'ar' else 'Archive ZIP complète' }}
+              </h6>
+              <p class="text-muted small mb-3">
+                {{ 'ملف .db + JSON في أرشيف واحد' if lang == 'ar' else 'Fichier .db + JSON dans une archive' }}
+              </p>
+              <a href="{{ url_for('backup.download_full') }}"
+                 class="btn btn-warning w-100">
+                <i class="fas fa-download me-2"></i>
+                {{ 'تحميل ZIP' if lang == 'ar' else 'Télécharger ZIP' }}
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ حفظ نسخة محلية على الخادم ══ -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white fw-bold py-3 border-bottom">
+      <i class="fas fa-server me-2 text-chad-blue"></i>
+      {{ 'النسخ الاحتياطية المحفوظة على الخادم' if lang == 'ar' else 'Sauvegardes stockées sur le serveur' }}
+    </div>
+    <div class="card-body">
+
+      <!-- زر حفظ نسخة جديدة -->
+      <form method="POST" action="{{ url_for('backup.save_local') }}" class="mb-4">
+        <div class="d-flex align-items-center gap-3 p-3 bg-light rounded-3">
+          <i class="fas fa-save fa-2x text-chad-blue"></i>
+          <div class="flex-grow-1">
+            <div class="fw-semibold">
+              {{ 'حفظ نسخة جديدة على الخادم' if lang == 'ar' else 'Enregistrer une nouvelle sauvegarde sur le serveur' }}
+            </div>
+            <div class="text-muted small">
+              {{ 'يحتفظ بآخر 10 نسخ تلقائياً ويحذف الأقدم' if lang == 'ar' else 'Conserve les 10 dernières, supprime les plus anciennes' }}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-chad-blue">
+            <i class="fas fa-save me-2"></i>
+            {{ 'حفظ الآن' if lang == 'ar' else 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+
+      <!-- جدول النسخ المحفوظة -->
+      {% if backups %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>{{ 'اسم الملف' if lang == 'ar' else 'Nom du fichier' }}</th>
+              <th class="text-center">{{ 'الحجم' if lang == 'ar' else 'Taille' }}</th>
+              <th class="text-center">{{ 'تاريخ الإنشاء' if lang == 'ar' else 'Date de création' }}</th>
+              <th class="text-center">{{ 'إجراء' if lang == 'ar' else 'Action' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bkp in backups %}
+            <tr>
+              <td>
+                <i class="fas fa-database text-primary me-2"></i>
+                <span class="font-monospace small">{{ bkp.name }}</span>
+              </td>
+              <td class="text-center">
+                <span class="badge bg-light text-dark border">{{ bkp.size_kb }} KB</span>
+              </td>
+              <td class="text-center text-muted small">{{ bkp.created_at }}</td>
+              <td class="text-center">
+                <form method="POST" action="{{ url_for('backup.delete_local') }}"
+                      style="display:inline"
+                      onsubmit="return confirm('{{ 'حذف هذه النسخة؟' if lang == 'ar' else 'Supprimer cette sauvegarde ?' }}')">
+                  <input type="hidden" name="filename" value="{{ bkp.name }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-4">
+        <i class="fas fa-inbox fa-3x mb-3 opacity-25"></i>
+        <p class="mb-0">{{ 'لا توجد نسخ احتياطية محفوظة بعد' if lang == 'ar' else 'Aucune sauvegarde locale pour l\'instant' }}</p>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- ══ تنبيه أمني ══ -->
+  <div class="alert alert-warning d-flex align-items-start gap-3 rounded-3">
+    <i class="fas fa-exclamation-triangle fa-2x mt-1 flex-shrink-0"></i>
+    <div>
+      <strong>{{ 'تنبيه أمني' if lang == 'ar' else 'Avertissement de sécurité' }}</strong><br>
+      <small>
+        {{ 'ملفات النسخ الاحتياطية تحتوي على بيانات حساسة للمواطنين. احرص على تخزينها في مكان آمن ومشفر، ولا تشاركها مع أطراف غير مخوَّلة.' if lang == 'ar'
+           else 'Les fichiers de sauvegarde contiennent des données sensibles des citoyens. Stockez-les dans un endroit sécurisé et crypté.' }}
+      </small>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

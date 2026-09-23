@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'طلب وثيقة' if lang == 'ar' else 'Demande de document' }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+    <div class="col-md-7">
+        <div class="card border-0 shadow rounded-4">
+            <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    {{ 'طلب وثيقة حالة مدنية' if lang == 'ar' else 'Demande de document d\'état civil' }}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+
+                    <!-- نوع الوثيقة -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold required-field">
+                            {{ 'نوع الوثيقة' if lang == 'ar' else 'Type de document' }}
+                        </label>
+                        <select name="doc_type" class="form-select" required>
+                            <option value="">
+                                {{ '-- اختر نوع الوثيقة --' if lang == 'ar' else '-- Choisir le type --' }}
+                            </option>
+                            <option value="birth">
+                                {{ 'شهادة ميلاد' if lang == 'ar' else 'Acte de Naissance' }}
+                            </option>
+                            <option value="marriage">
+                                {{ 'عقد زواج' if lang == 'ar' else 'Acte de Mariage' }}
+                            </option>
+                            <option value="death">
+                                {{ 'شهادة وفاة' if lang == 'ar' else 'Acte de Décès' }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <!-- رقم الشهادة -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ 'رقم الشهادة' if lang == 'ar' else 'Numéro d\'acte' }}
+                            <span class="text-muted">
+                                ({{ 'اختياري إن كنت تعرفه' if lang == 'ar' else 'optionnel si connu' }})
+                            </span>
+                        </label>
+                        <input type="text" name="cert_number" class="form-control font-monospace"
+                               placeholder="BIRTH-2026-NDJ001-00001"
+                               style="text-transform:uppercase">
+                    </div>
+
+                    <!-- الاسم الكامل -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ 'الاسم الكامل' if lang == 'ar' else 'Nom complet' }}
+                        </label>
+                        <input type="text" name="full_name" class="form-control"
+                               placeholder="{{ 'أدخل الاسم للبحث' if lang == 'ar' else 'Entrez le nom pour rechercher' }}">
+                    </div>
+
+                    <!-- المركز -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            {{ 'مركز الحالة المدنية' if lang == 'ar' else 'Centre état civil' }}
+                            <span class="text-muted">
+                                ({{ 'اختياري' if lang == 'ar' else 'optionnel' }})
+                            </span>
+                        </label>
+                        <select name="center_id" class="form-select">
+                            <option value="">
+                                {{ '-- كل المراكز --' if lang == 'ar' else '-- Tous les centres --' }}
+                            </option>
+                            {% for center in centers %}
+                            <option value="{{ center.id }}">
+                                {{ center.name_ar if lang == 'ar' else center.name_fr }}
+                                ({{ center.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- تنبيه -->
+                    <div class="alert alert-warning border-0 rounded-3 mb-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <small>
+                            {{ 'يجب إدخال رقم الشهادة أو الاسم الكامل للبحث' if lang == 'ar'
+                               else 'Vous devez entrer le numéro d\'acte ou le nom complet pour rechercher' }}
+                        </small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-chad-blue btn-lg">
+                            <i class="fas fa-search me-2"></i>
+                            {{ 'بحث عن الوثيقة' if lang == 'ar' else 'Rechercher le document' }}
+                        </button>
+                        <a href="{{ url_for('citizen.portal') }}"
+                           class="btn btn-outline-secondary">
+                            {{ 'رجوع للبوابة' if lang == 'ar' else 'Retour au portail' }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

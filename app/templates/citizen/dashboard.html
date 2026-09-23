@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'لوحة تحكم المواطن' if lang=='ar' else 'Tableau de bord citoyen' }}{% endblock %}
+{% block content %}
+
+<!-- ترحيب -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h4 class="fw-bold mb-1">
+      <i class="fas fa-home me-2 text-chad-blue"></i>
+      {{ 'أهلاً، ' + current_user.full_name if lang=='ar' else 'Bienvenue, ' + current_user.full_name }}
+    </h4>
+    <p class="text-muted mb-0 small">
+      <i class="fas fa-id-card me-1"></i>
+      {{ 'الرقم الوطني:' if lang=='ar' else 'NNI:' }}
+      <span class="font-monospace fw-bold">{{ current_user.nni }}</span>
+    </p>
+  </div>
+  <a href="{{ url_for('citizen.new_request') }}" class="btn btn-chad-blue btn-sm fw-bold">
+    <i class="fas fa-plus-circle me-1"></i>
+    {{ 'طلب جديد' if lang=='ar' else 'Nouvelle demande' }}
+  </a>
+</div>
+
+<!-- إحصاءات الطلبات -->
+<div class="row g-3 mb-4">
+  <div class="col-4">
+    <div class="card border-0 shadow-sm rounded-4 text-center py-3">
+      <div class="fs-2 fw-bold text-warning">{{ stats.pending }}</div>
+      <div class="small text-muted">{{ 'قيد المراجعة' if lang=='ar' else 'En attente' }}</div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card border-0 shadow-sm rounded-4 text-center py-3">
+      <div class="fs-2 fw-bold text-success">{{ stats.approved }}</div>
+      <div class="small text-muted">{{ 'مقبولة' if lang=='ar' else 'Acceptées' }}</div>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card border-0 shadow-sm rounded-4 text-center py-3">
+      <div class="fs-2 fw-bold text-danger">{{ stats.rejected }}</div>
+      <div class="small text-muted">{{ 'مرفوضة' if lang=='ar' else 'Refusées' }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- خدمات السجل المدني -->
+<h5 class="fw-bold mb-3">
+  <i class="fas fa-concierge-bell me-2 text-chad-blue"></i>
+  {{ 'خدمات السجل المدني' if lang=='ar' else "Services d'état civil" }}
+</h5>
+
+<div class="row g-3 mb-5">
+
+  <!-- ميلاد -->
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+      <div class="rounded-circle bg-blue-light mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:56px;height:56px">
+        <i class="fas fa-baby fa-lg text-chad-blue"></i>
+      </div>
+      <div class="fw-bold small mb-2">{{ 'الميلاد' if lang=='ar' else 'Naissance' }}</div>
+      <div class="d-flex flex-column gap-1">
+        <a href="{{ url_for('citizen.new_request', doc_type='birth', request_type='new_certificate') }}"
+           class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-plus me-1"></i>{{ 'طلب شهادة' if lang=='ar' else 'Demande' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='birth', request_type='reissue') }}"
+           class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-redo me-1"></i>{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='birth', request_type='correction') }}"
+           class="btn btn-outline-warning btn-sm">
+          <i class="fas fa-edit me-1"></i>{{ 'تصحيح' if lang=='ar' else 'Correction' }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- وفاة -->
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+      <div class="rounded-circle bg-light mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:56px;height:56px">
+        <i class="fas fa-mosque fa-lg text-secondary"></i>
+      </div>
+      <div class="fw-bold small mb-2">{{ 'الوفاة' if lang=='ar' else 'Décès' }}</div>
+      <div class="d-flex flex-column gap-1">
+        <a href="{{ url_for('citizen.new_request', doc_type='death', request_type='new_certificate') }}"
+           class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-plus me-1"></i>{{ 'طلب شهادة' if lang=='ar' else 'Demande' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='death', request_type='reissue') }}"
+           class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-redo me-1"></i>{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='death', request_type='correction') }}"
+           class="btn btn-outline-warning btn-sm">
+          <i class="fas fa-edit me-1"></i>{{ 'تصحيح' if lang=='ar' else 'Correction' }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- زواج -->
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+      <div class="rounded-circle bg-green-light mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:56px;height:56px">
+        <i class="fas fa-ring fa-lg text-success"></i>
+      </div>
+      <div class="fw-bold small mb-2">{{ 'الزواج' if lang=='ar' else 'Mariage' }}</div>
+      <div class="d-flex flex-column gap-1">
+        <a href="{{ url_for('citizen.new_request', doc_type='marriage', request_type='new_certificate') }}"
+           class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-plus me-1"></i>{{ 'طلب شهادة' if lang=='ar' else 'Demande' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='marriage', request_type='reissue') }}"
+           class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-redo me-1"></i>{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='marriage', request_type='correction') }}"
+           class="btn btn-outline-warning btn-sm">
+          <i class="fas fa-edit me-1"></i>{{ 'تصحيح' if lang=='ar' else 'Correction' }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- طلاق -->
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm rounded-4 h-100 text-center p-3">
+      <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:56px;height:56px;background:#fdecea">
+        <i class="fas fa-file-contract fa-lg text-danger"></i>
+      </div>
+      <div class="fw-bold small mb-2">{{ 'الطلاق' if lang=='ar' else 'Divorce' }}</div>
+      <div class="d-flex flex-column gap-1">
+        <a href="{{ url_for('citizen.new_request', doc_type='divorce', request_type='new_certificate') }}"
+           class="btn btn-outline-primary btn-sm">
+          <i class="fas fa-plus me-1"></i>{{ 'طلب شهادة' if lang=='ar' else 'Demande' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='divorce', request_type='reissue') }}"
+           class="btn btn-outline-secondary btn-sm">
+          <i class="fas fa-redo me-1"></i>{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+        </a>
+        <a href="{{ url_for('citizen.new_request', doc_type='divorce', request_type='correction') }}"
+           class="btn btn-outline-warning btn-sm">
+          <i class="fas fa-edit me-1"></i>{{ 'تصحيح' if lang=='ar' else 'Correction' }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- آخر الطلبات -->
+<h5 class="fw-bold mb-3">
+  <i class="fas fa-history me-2 text-chad-blue"></i>
+  {{ 'آخر طلباتك' if lang=='ar' else 'Vos dernières demandes' }}
+</h5>
+
+{% if requests %}
+<div class="card border-0 shadow-sm rounded-4">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-chad">
+          <tr>
+            <th>#</th>
+            <th>{{ 'الوثيقة' if lang=='ar' else 'Document' }}</th>
+            <th>{{ 'نوع الطلب' if lang=='ar' else 'Type' }}</th>
+            <th>{{ 'تاريخ الطلب' if lang=='ar' else 'Date' }}</th>
+            <th>{{ 'الحالة' if lang=='ar' else 'Statut' }}</th>
+            <th>{{ 'الإجراء' if lang=='ar' else 'Action' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in requests %}
+          <tr>
+            <td class="text-muted small">{{ r.id }}</td>
+            <td>
+              {% if r.doc_type == 'birth' %}<i class="fas fa-baby text-chad-blue me-1"></i>{{ 'ميلاد' if lang=='ar' else 'Naissance' }}
+              {% elif r.doc_type == 'death' %}<i class="fas fa-mosque text-secondary me-1"></i>{{ 'وفاة' if lang=='ar' else 'Décès' }}
+              {% elif r.doc_type == 'marriage' %}<i class="fas fa-ring text-success me-1"></i>{{ 'زواج' if lang=='ar' else 'Mariage' }}
+              {% elif r.doc_type == 'divorce' %}<i class="fas fa-file-contract text-danger me-1"></i>{{ 'طلاق' if lang=='ar' else 'Divorce' }}
+              {% endif %}
+            </td>
+            <td class="small">
+              {% if r.request_type == 'new_certificate' %}{{ 'طلب شهادة' if lang=='ar' else 'Nouvelle' }}
+              {% elif r.request_type == 'reissue' %}{{ 'إعادة إصدار' if lang=='ar' else 'Réémission' }}
+              {% else %}{{ 'تصحيح' if lang=='ar' else 'Correction' }}{% endif %}
+            </td>
+            <td class="small text-muted">{{ r.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+              {% if r.status == 'pending' %}
+                <span class="badge bg-warning text-dark">
+                  <i class="fas fa-hourglass-half me-1"></i>
+                  {{ 'قيد المراجعة' if lang=='ar' else 'En attente' }}
+                </span>
+              {% elif r.status == 'approved' %}
+                <span class="badge bg-success">
+                  <i class="fas fa-check me-1"></i>
+                  {{ 'مقبول' if lang=='ar' else 'Accepté' }}
+                </span>
+              {% else %}
+                <span class="badge bg-danger">
+                  <i class="fas fa-times me-1"></i>
+                  {{ 'مرفوض' if lang=='ar' else 'Refusé' }}
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex gap-1 flex-wrap">
+
+                <!-- زر التفاصيل دائماً -->
+                <a href="{{ url_for('citizen.track_request', req_id=r.id) }}"
+                   class="btn btn-outline-secondary btn-sm"
+                   title="{{ 'عرض التفاصيل' if lang=='ar' else 'Détails' }}">
+                  <i class="fas fa-eye"></i>
+                </a>
+
+                <!-- ===== زر تحميل الشهادة — يظهر فقط إذا كان الطلب مقبولاً ومربوطاً بوثيقة ===== -->
+                {% if r.status == 'approved' and r.issued_doc_id %}
+                <a href="{{ url_for('citizen.download_doc', req_id=r.id) }}"
+                   class="btn btn-success btn-sm fw-bold"
+                   target="_blank"
+                   title="{{ 'تحميل الشهادة PDF' if lang=='ar' else 'Télécharger PDF' }}">
+                  <i class="fas fa-file-pdf me-1"></i>
+                  {{ 'تحميل' if lang=='ar' else 'PDF' }}
+                </a>
+
+                <!-- إذا مقبول لكن لم تُربط وثيقة بعد -->
+                {% elif r.status == 'approved' and not r.issued_doc_id %}
+                <span class="btn btn-outline-warning btn-sm disabled"
+                      title="{{ 'الوثيقة قيد الرفع من الموظف' if lang=='ar' else 'Document en cours de traitement' }}">
+                  <i class="fas fa-clock me-1"></i>
+                  {{ 'قريباً' if lang=='ar' else 'Bientôt' }}
+                </span>
+                {% endif %}
+
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="fas fa-inbox fa-3x opacity-25 mb-3"></i>
+  <p>{{ 'لا توجد طلبات بعد. ابدأ بتقديم طلبك أعلاه' if lang=='ar' else "Aucune demande pour l'instant" }}</p>
+</div>
+{% endif %}
+
+{% endblock %}

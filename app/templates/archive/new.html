@@ -1,0 +1,304 @@
+{% extends 'base.html' %}
+{% block title %}
+  {{ ('تعديل سجل أرشيف' if edit else 'رقمنة وثيقة جديدة') if lang == 'ar'
+     else ('Modifier' if edit else 'Numériser un document') }}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:860px">
+  <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+
+    <div class="card-header bg-chad-blue text-white py-3">
+      <h5 class="mb-0 fw-bold">
+        <i class="fas fa-archive me-2"></i>
+        {{ ('تعديل سجل أرشيف' if edit else 'رقمنة وثيقة تاريخية جديدة') if lang == 'ar'
+           else ('Modifier archive' if edit else 'Numériser un document historique') }}
+      </h5>
+    </div>
+
+    <div class="card-body p-4">
+      <form method="POST" enctype="multipart/form-data">
+
+        <!-- ══ القسم 1: تصنيف الوثيقة ══ -->
+        <h6 class="fw-bold text-chad-blue border-bottom pb-2 mb-3">
+          <i class="fas fa-tag me-2"></i>
+          {{ 'تصنيف الوثيقة' if lang == 'ar' else 'Classification du document' }}
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'نوع الوثيقة' if lang == 'ar' else 'Type de document' }} *
+            </label>
+            <select name="doc_type" class="form-select" required>
+              <option value="birth"    {{ 'selected' if record and record.doc_type=='birth' }}>
+                {{ 'ميلاد' if lang=='ar' else 'Naissance' }}</option>
+              <option value="marriage" {{ 'selected' if record and record.doc_type=='marriage' }}>
+                {{ 'زواج' if lang=='ar' else 'Mariage' }}</option>
+              <option value="death"    {{ 'selected' if record and record.doc_type=='death' }}>
+                {{ 'وفاة' if lang=='ar' else 'Décès' }}</option>
+              <option value="divorce"  {{ 'selected' if record and record.doc_type=='divorce' }}>
+                {{ 'طلاق' if lang=='ar' else 'Divorce' }}</option>
+              <option value="other"    {{ 'selected' if record and record.doc_type=='other' }}>
+                {{ 'أخرى' if lang=='ar' else 'Autre' }}</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'النوع الفرعي' if lang == 'ar' else 'Sous-type' }}
+            </label>
+            <input type="text" name="doc_subtype" class="form-control"
+                   value="{{ record.doc_subtype if record else '' }}"
+                   placeholder="{{ 'مثال: عقد زواج عرفي' if lang=='ar' else 'Ex: acte de naissance tardif' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'مصدر الوثيقة' if lang == 'ar' else 'Source' }}
+            </label>
+            <select name="source_type" class="form-select">
+              <option value="paper"     {{ 'selected' if not record or record.source_type=='paper' }}>
+                {{ 'ورقي' if lang=='ar' else 'Papier' }}</option>
+              <option value="microfilm" {{ 'selected' if record and record.source_type=='microfilm' }}>
+                Microfilm</option>
+              <option value="photo"     {{ 'selected' if record and record.source_type=='photo' }}>
+                {{ 'صورة فوتوغرافية' if lang=='ar' else 'Photo' }}</option>
+              <option value="other"     {{ 'selected' if record and record.source_type=='other' }}>
+                {{ 'أخرى' if lang=='ar' else 'Autre' }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ══ القسم 2: بيانات الوثيقة الأصلية ══ -->
+        <h6 class="fw-bold text-chad-blue border-bottom pb-2 mb-3">
+          <i class="fas fa-file-alt me-2"></i>
+          {{ 'بيانات الوثيقة الأصلية' if lang == 'ar' else 'Informations sur le document original' }}
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">
+              {{ 'رقم الوثيقة الأصلي' if lang == 'ar' else 'N° original' }}
+            </label>
+            <input type="text" name="original_number" class="form-control font-monospace"
+                   value="{{ record.original_number if record else '' }}">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">
+              {{ 'تاريخ الوثيقة' if lang == 'ar' else 'Date du document' }}
+            </label>
+            <input type="date" name="original_date" class="form-control"
+                   value="{{ record.original_date.isoformat() if record and record.original_date else '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">
+              {{ 'السنة' if lang == 'ar' else 'Année' }}
+            </label>
+            <input type="number" name="original_year" class="form-control"
+                   value="{{ record.original_year if record else '' }}"
+                   placeholder="1975" min="1800" max="2024">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'المركز المُصدِر الأصلي' if lang == 'ar' else 'Centre émetteur original' }}
+            </label>
+            <input type="text" name="original_center" class="form-control"
+                   value="{{ record.original_center if record else '' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'المنطقة' if lang == 'ar' else 'Région' }}
+            </label>
+            <input type="text" name="original_region" class="form-control"
+                   value="{{ record.original_region if record else '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">
+              {{ 'رقم المجلد' if lang == 'ar' else 'Volume' }}
+            </label>
+            <input type="text" name="register_volume" class="form-control"
+                   value="{{ record.register_volume if record else '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">
+              {{ 'رقم الصفحة' if lang == 'ar' else 'Page' }}
+            </label>
+            <input type="text" name="register_page" class="form-control"
+                   value="{{ record.register_page if record else '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">
+              {{ 'رقم القيد' if lang == 'ar' else 'Entrée' }}
+            </label>
+            <input type="text" name="register_entry" class="form-control"
+                   value="{{ record.register_entry if record else '' }}">
+          </div>
+        </div>
+
+        <!-- ══ القسم 3: بيانات الشخص ══ -->
+        <h6 class="fw-bold text-chad-blue border-bottom pb-2 mb-3">
+          <i class="fas fa-user me-2"></i>
+          {{ 'بيانات الشخص الرئيسي' if lang == 'ar' else 'Informations sur la personne' }}
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'الاسم الكامل' if lang == 'ar' else 'Nom complet' }} *
+            </label>
+            <input type="text" name="person_name" class="form-control" required
+                   value="{{ record.person_name if record else '' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'الاسم بالفرنسية' if lang == 'ar' else 'Nom en français' }}
+            </label>
+            <input type="text" name="person_name_fr" class="form-control"
+                   value="{{ record.person_name_fr if record else '' }}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">
+              {{ 'سنة الميلاد' if lang == 'ar' else 'Année naissance' }}
+            </label>
+            <input type="number" name="person_birth_year" class="form-control"
+                   value="{{ record.person_birth_year if record else '' }}"
+                   placeholder="1960" min="1800" max="2024">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'اسم الأب' if lang == 'ar' else 'Nom du père' }}
+            </label>
+            <input type="text" name="father_name" class="form-control"
+                   value="{{ record.father_name if record else '' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'اسم الأم' if lang == 'ar' else 'Nom de la mère' }}
+            </label>
+            <input type="text" name="mother_name" class="form-control"
+                   value="{{ record.mother_name if record else '' }}">
+          </div>
+        </div>
+
+        <!-- ══ القسم 4: الصورة الممسوحة ══ -->
+        <h6 class="fw-bold text-chad-blue border-bottom pb-2 mb-3">
+          <i class="fas fa-camera me-2"></i>
+          {{ 'الصورة الممسوحة ضوئياً' if lang == 'ar' else 'Document scanné' }}
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">
+              {{ 'رفع الصورة' if lang == 'ar' else 'Uploader le scan' }}
+            </label>
+            <input type="file" name="scan_file" class="form-control"
+                   accept=".png,.jpg,.jpeg,.pdf,.tif,.tiff">
+            <div class="form-text">
+              {{ 'يُقبل: PNG, JPG, PDF, TIFF — حجم أقصى 10MB' if lang == 'ar'
+                 else 'Accepté: PNG, JPG, PDF, TIFF — Max 10MB' }}
+            </div>
+            {% if record and record.scan_file %}
+            <div class="mt-2 text-success small">
+              <i class="fas fa-check-circle me-1"></i>
+              {{ 'صورة موجودة:' if lang == 'ar' else 'Scan existant:' }}
+              {{ record.scan_file }}
+            </div>
+            {% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">
+              {{ 'جودة الصورة' if lang == 'ar' else 'Qualité du scan' }}
+            </label>
+            <select name="scan_quality" class="form-select">
+              <option value="good"   {{ 'selected' if record and record.scan_quality=='good' }}>
+                {{ 'جيدة' if lang=='ar' else 'Bonne' }}</option>
+              <option value="medium" {{ 'selected' if not record or record.scan_quality=='medium' }}>
+                {{ 'متوسطة' if lang=='ar' else 'Moyenne' }}</option>
+              <option value="poor"   {{ 'selected' if record and record.scan_quality=='poor' }}>
+                {{ 'ضعيفة' if lang=='ar' else 'Mauvaise' }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ══ القسم 5: النسخ والتحقق ══ -->
+        <h6 class="fw-bold text-chad-blue border-bottom pb-2 mb-3">
+          <i class="fas fa-keyboard me-2"></i>
+          {{ 'النسخ والتحقق' if lang == 'ar' else 'Transcription et vérification' }}
+        </h6>
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">
+              {{ 'حالة النسخ' if lang == 'ar' else 'Statut de transcription' }}
+            </label>
+            <select name="transcription_status" class="form-select">
+              <option value="pending"     {{ 'selected' if not record or record.transcription_status=='pending' }}>
+                {{ 'في الانتظار' if lang=='ar' else 'En attente' }}</option>
+              <option value="in_progress" {{ 'selected' if record and record.transcription_status=='in_progress' }}>
+                {{ 'جارٍ النسخ' if lang=='ar' else 'En cours' }}</option>
+              <option value="done"        {{ 'selected' if record and record.transcription_status=='done' }}>
+                {{ 'منسوخ' if lang=='ar' else 'Transcrit' }}</option>
+              <option value="verified"    {{ 'selected' if record and record.transcription_status=='verified' }}>
+                {{ 'مُتحقَّق منه' if lang=='ar' else 'Vérifié' }}</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">
+              {{ 'نص النسخ (الوثيقة مُعادة كتابتها)' if lang == 'ar' else 'Texte transcrit' }}
+            </label>
+            <textarea name="transcription" class="form-control" rows="5"
+                      placeholder="{{ 'اكتب هنا نص الوثيقة الورقية كما هو...' if lang == 'ar' else 'Entrez ici le texte du document original...' }}">{{ record.transcription if record else '' }}</textarea>
+          </div>
+        </div>
+
+        <!-- ══ القسم 6: إعدادات إضافية ══ -->
+        <h6 class="fw-bold text-chad-blue border-bottom pb-2 mb-3">
+          <i class="fas fa-cog me-2"></i>
+          {{ 'إعدادات إضافية' if lang == 'ar' else 'Paramètres supplémentaires' }}
+        </h6>
+        <div class="row g-3 mb-4">
+          {% if current_user.role != 'officer' %}
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">
+              {{ 'المركز' if lang == 'ar' else 'Centre' }}
+            </label>
+            <select name="center_id" class="form-select">
+              <option value="">— {{ 'اختر المركز' if lang=='ar' else 'Choisir' }} —</option>
+              {% for c in centers %}
+              <option value="{{ c.id }}"
+                      {{ 'selected' if record and record.center_id == c.id }}>
+                {{ c.name_ar }} ({{ c.code }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">
+              {{ 'ملاحظات' if lang == 'ar' else 'Notes' }}
+            </label>
+            <input type="text" name="notes" class="form-control"
+                   value="{{ record.notes if record else '' }}">
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="is_confidential"
+                     id="chkConf" {{ 'checked' if record and record.is_confidential }}>
+              <label class="form-check-label fw-semibold text-danger" for="chkConf">
+                <i class="fas fa-lock me-1"></i>
+                {{ 'وثيقة سرية' if lang == 'ar' else 'Document confidentiel' }}
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- أزرار -->
+        <div class="d-flex gap-2 pt-2">
+          <button type="submit" class="btn btn-chad-blue px-5">
+            <i class="fas fa-save me-2"></i>
+            {{ 'حفظ السجل' if lang == 'ar' else 'Enregistrer' }}
+          </button>
+          <a href="{{ url_for('archive.index') }}" class="btn btn-outline-secondary">
+            {{ 'إلغاء' if lang == 'ar' else 'Annuler' }}
+          </a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

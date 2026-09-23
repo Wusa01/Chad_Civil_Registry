@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}{{ ('تعديل عقد زواج' if edit else 'عقد زواج جديد') if lang=='ar' else ('Modifier mariage' if edit else 'Nouveau mariage') }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="fas fa-ring me-2 text-chad-blue"></i>
+    {{ ('تعديل عقد الزواج' if edit else 'تسجيل عقد زواج جديد') if lang=='ar' else ('Modifier mariage' if edit else 'Nouveau mariage') }}
+  </h4>
+  <a href="{{ url_for('marriages.index') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="fas fa-arrow-right me-1"></i>{{ 'رجوع' if lang=='ar' else 'Retour' }}
+  </a>
+</div>
+
+<form method="POST">
+
+  <!-- ===== بيانات العقد ===== -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-chad-blue text-white rounded-top-4 py-3">
+      <h6 class="mb-0 fw-bold"><i class="fas fa-certificate me-2"></i>{{ 'بيانات العقد' if lang=='ar' else 'Données du contrat' }}</h6>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-3">
+        {% if current_user.role != 'officer' %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'مركز الحالة المدنية' if lang=='ar' else 'Centre' }} <span class="text-danger">*</span></label>
+          <select name="center_id" class="form-select" required>
+            <option value="">— {{ 'اختر مركزاً' if lang=='ar' else 'Choisir centre' }} —</option>
+            {% for c in centers %}
+            <option value="{{ c.id }}" {{ 'selected' if marriage and marriage.center_id==c.id }}>{{ c.name_ar }} ({{ c.code }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'تاريخ الزواج' if lang=='ar' else 'Date mariage' }} <span class="text-danger">*</span></label>
+          <input type="date" name="marriage_date" class="form-control" required
+                 value="{{ marriage.marriage_date if marriage else today }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'مكان الزواج' if lang=='ar' else 'Lieu' }} <span class="text-danger">*</span></label>
+          <input type="text" name="marriage_place" class="form-control" required
+                 value="{{ marriage.marriage_place if marriage else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'نوع الزواج' if lang=='ar' else 'Type' }} <span class="text-danger">*</span></label>
+          <select name="marriage_type" class="form-select">
+            <option value="monogamy" {{ 'selected' if not marriage or marriage.marriage_type=='monogamy' }}>{{ 'أحادي' if lang=='ar' else 'Monogamie' }}</option>
+            <option value="polygamy" {{ 'selected' if marriage and marriage.marriage_type=='polygamy' }}>{{ 'تعدد' if lang=='ar' else 'Polygamie' }}</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'المهر' if lang=='ar' else 'Dot' }}</label>
+          <div class="input-group">
+            <div class="input-group-text">
+              <input type="checkbox" name="dowry_mentioned" value="1"
+                     {{ 'checked' if marriage and marriage.dowry_mentioned }}>
+            </div>
+            <input type="number" name="dowry_amount" class="form-control" placeholder="{{ 'المبلغ' if lang=='ar' else 'Montant' }}" step="0.01"
+                   value="{{ marriage.dowry_amount if marriage and marriage.dowry_amount else '' }}">
+          </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <div class="form-check">
+            <input type="checkbox" name="age_dispensation" class="form-check-input" value="1"
+                   {{ 'checked' if marriage and marriage.age_dispensation }}>
+            <label class="form-check-label">{{ 'إعفاء من السن' if lang=='ar' else 'Dérogation d\'âge' }}</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== بيانات الزوج ===== -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-light rounded-top-4 py-3">
+      <h6 class="mb-0 fw-bold"><i class="fas fa-male me-2 text-chad-blue"></i>{{ 'بيانات الزوج' if lang=='ar' else 'Époux' }}</h6>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_full_name" class="form-control" required
+                 value="{{ marriage.husband_full_name if marriage else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date naissance' }} <span class="text-danger">*</span></label>
+          <input type="date" name="husband_birth_date" class="form-control" required
+                 value="{{ marriage.husband_birth_date if marriage else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu naissance' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_birth_place" class="form-control" required
+                 value="{{ marriage.husband_birth_place if marriage else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_profession" class="form-control" required
+                 value="{{ marriage.husband_profession if marriage else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_nationality" class="form-control" required
+                 value="{{ marriage.husband_nationality if marriage else 'تشادي' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_id_number" class="form-control" required
+                 value="{{ marriage.husband_id_number if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'اسم الأب' if lang=='ar' else 'Père' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_father_name" class="form-control" required
+                 value="{{ marriage.husband_father_name if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'اسم الأم' if lang=='ar' else 'Mère' }} <span class="text-danger">*</span></label>
+          <input type="text" name="husband_mother_name" class="form-control" required
+                 value="{{ marriage.husband_mother_name if marriage else '' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== بيانات الزوجة ===== -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-light rounded-top-4 py-3">
+      <h6 class="mb-0 fw-bold"><i class="fas fa-female me-2 text-chad-yellow"></i>{{ 'بيانات الزوجة' if lang=='ar' else 'Épouse' }}</h6>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_full_name" class="form-control" required
+                 value="{{ marriage.wife_full_name if marriage else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">{{ 'تاريخ الميلاد' if lang=='ar' else 'Date naissance' }} <span class="text-danger">*</span></label>
+          <input type="date" name="wife_birth_date" class="form-control" required
+                 value="{{ marriage.wife_birth_date if marriage else '' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu naissance' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_birth_place" class="form-control" required
+                 value="{{ marriage.wife_birth_place if marriage else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'المهنة' if lang=='ar' else 'Profession' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_profession" class="form-control" required
+                 value="{{ marriage.wife_profession if marriage else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_nationality" class="form-control" required
+                 value="{{ marriage.wife_nationality if marriage else 'تشادية' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_id_number" class="form-control" required
+                 value="{{ marriage.wife_id_number if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'اسم الأب' if lang=='ar' else 'Père' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_father_name" class="form-control" required
+                 value="{{ marriage.wife_father_name if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'اسم الأم' if lang=='ar' else 'Mère' }} <span class="text-danger">*</span></label>
+          <input type="text" name="wife_mother_name" class="form-control" required
+                 value="{{ marriage.wife_mother_name if marriage else '' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== الشهود ===== -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-light rounded-top-4 py-3">
+      <h6 class="mb-0 fw-bold"><i class="fas fa-users me-2"></i>{{ 'الشهود' if lang=='ar' else 'Témoins' }}</h6>
+    </div>
+    <div class="card-body p-4">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'اسم الشاهد الأول' if lang=='ar' else 'Témoin 1 — Nom' }} <span class="text-danger">*</span></label>
+          <input type="text" name="witness1_name" class="form-control" required
+                 value="{{ marriage.witness1_name if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'رقم هوية الشاهد الأول' if lang=='ar' else 'Témoin 1 — N° CIN' }} <span class="text-danger">*</span></label>
+          <input type="text" name="witness1_id" class="form-control" required
+                 value="{{ marriage.witness1_id if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'اسم الشاهد الثاني' if lang=='ar' else 'Témoin 2 — Nom' }} <span class="text-danger">*</span></label>
+          <input type="text" name="witness2_name" class="form-control" required
+                 value="{{ marriage.witness2_name if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'رقم هوية الشاهد الثاني' if lang=='ar' else 'Témoin 2 — N° CIN' }} <span class="text-danger">*</span></label>
+          <input type="text" name="witness2_id" class="form-control" required
+                 value="{{ marriage.witness2_id if marriage else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">{{ 'ضابط الحالة المدنية' if lang=='ar' else 'Officier d\'état civil' }} <span class="text-danger">*</span></label>
+          <input type="text" name="civil_officer" class="form-control" required
+                 value="{{ marriage.civil_officer if marriage else '' }}">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- زر الحفظ -->
+  <div class="d-flex gap-2 justify-content-end">
+    <a href="{{ url_for('marriages.index') }}" class="btn btn-outline-secondary">
+      <i class="fas fa-times me-2"></i>{{ 'إلغاء' if lang=='ar' else 'Annuler' }}
+    </a>
+    <button type="submit" class="btn btn-chad-blue px-4">
+      <i class="fas fa-save me-2"></i>
+      {{ ('تحديث' if edit else 'حفظ العقد') if lang=='ar' else ('Modifier' if edit else 'Enregistrer') }}
+    </button>
+  </div>
+
+</form>
+{% endblock %}

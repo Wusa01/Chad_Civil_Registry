@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تفاصيل سجل الأرشيف' if lang == 'ar' else 'Détail archive' }}{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width:900px">
+
+  <!-- رأس -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h4 class="fw-bold text-chad-blue mb-1">
+        <i class="fas fa-archive me-2"></i>
+        {{ record.person_name }}
+      </h4>
+      <span class="badge bg-chad-blue me-1">{{ record.doc_type_label_ar }}</span>
+      <span class="badge bg-{{ record.status_color }}">{{ record.status_label_ar }}</span>
+      {% if record.is_confidential %}
+      <span class="badge bg-danger ms-1">
+        <i class="fas fa-lock me-1"></i>{{ 'سري' if lang=='ar' else 'Confidentiel' }}
+      </span>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+      {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+      <a href="{{ url_for('archive.edit', record_id=record.id) }}"
+         class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-edit me-1"></i>{{ 'تعديل' if lang=='ar' else 'Modifier' }}
+      </a>
+      {% endif %}
+      <a href="{{ url_for('archive.index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-right me-1"></i>{{ 'رجوع' if lang=='ar' else 'Retour' }}
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- العمود الأيسر: البيانات -->
+    <div class="col-md-7">
+
+      <!-- بيانات الوثيقة الأصلية -->
+      <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-file-alt me-2 text-chad-blue"></i>
+          {{ 'بيانات الوثيقة الأصلية' if lang=='ar' else 'Document original' }}
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted w-40">{{ 'الرقم الأصلي' if lang=='ar' else 'N° original' }}</td>
+                <td class="fw-semibold font-monospace">{{ record.original_number or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'تاريخ الوثيقة' if lang=='ar' else 'Date' }}</td>
+                <td>{{ record.original_date or record.original_year or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'المركز الأصلي' if lang=='ar' else 'Centre original' }}</td>
+                <td>{{ record.original_center or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'المنطقة' if lang=='ar' else 'Région' }}</td>
+                <td>{{ record.original_region or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'المجلد / الصفحة / القيد' if lang=='ar' else 'Vol/Page/Entrée' }}</td>
+                <td>{{ record.register_volume or '—' }} / {{ record.register_page or '—' }} / {{ record.register_entry or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'المصدر' if lang=='ar' else 'Source' }}</td>
+                <td>{{ record.source_type }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- بيانات الشخص -->
+      <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-user me-2 text-chad-blue"></i>
+          {{ 'بيانات الشخص' if lang=='ar' else 'Personne concernée' }}
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted w-40">{{ 'الاسم' if lang=='ar' else 'Nom' }}</td>
+                <td class="fw-bold">{{ record.person_name }}</td></tr>
+            <tr><td class="text-muted">{{ 'الاسم بالفرنسية' if lang=='ar' else 'Nom FR' }}</td>
+                <td>{{ record.person_name_fr or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'سنة الميلاد' if lang=='ar' else 'Année naiss.' }}</td>
+                <td>{{ record.person_birth_year or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'اسم الأب' if lang=='ar' else 'Père' }}</td>
+                <td>{{ record.father_name or '—' }}</td></tr>
+            <tr><td class="text-muted">{{ 'اسم الأم' if lang=='ar' else 'Mère' }}</td>
+                <td>{{ record.mother_name or '—' }}</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- نص النسخ -->
+      {% if record.transcription %}
+      <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-keyboard me-2 text-chad-blue"></i>
+          {{ 'النص المنسوخ' if lang=='ar' else 'Texte transcrit' }}
+        </div>
+        <div class="card-body">
+          <p class="mb-0" style="white-space:pre-line;line-height:1.8">{{ record.transcription }}</p>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ربط بسجل رقمي -->
+      <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-link me-2 text-chad-blue"></i>
+          {{ 'ربط بسجل رقمي' if lang=='ar' else 'Lien avec un enregistrement numérique' }}
+        </div>
+        <div class="card-body">
+          {% if linked %}
+          <div class="alert alert-success mb-2 py-2">
+            <i class="fas fa-check-circle me-2"></i>
+            {{ 'مرتبط بسجل رقمي' if lang=='ar' else 'Lié à un enregistrement numérique' }}:
+            <strong>{{ linked.certificate_number }}</strong>
+          </div>
+          {% else %}
+          {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+          <form method="POST" action="{{ url_for('archive.link_record', record_id=record.id) }}"
+                class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label small">{{ 'نوع السجل' if lang=='ar' else 'Type' }}</label>
+              <select name="linked_doc_type" class="form-select form-select-sm">
+                <option value="birth">{{ 'ميلاد' if lang=='ar' else 'Naissance' }}</option>
+                <option value="marriage">{{ 'زواج' if lang=='ar' else 'Mariage' }}</option>
+                <option value="death">{{ 'وفاة' if lang=='ar' else 'Décès' }}</option>
+                <option value="divorce">{{ 'طلاق' if lang=='ar' else 'Divorce' }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small">{{ 'رقم السجل (ID)' if lang=='ar' else 'ID du dossier' }}</label>
+              <input type="number" name="linked_record_id"
+                     class="form-control form-control-sm" placeholder="مثال: 42" min="1">
+            </div>
+            <div class="col-md-4">
+              <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                <i class="fas fa-link me-1"></i>{{ 'ربط' if lang=='ar' else 'Lier' }}
+              </button>
+            </div>
+          </form>
+          {% else %}
+          <p class="text-muted small mb-0">{{ 'لا يوجد سجل رقمي مرتبط' if lang=='ar' else 'Aucun lien numérique' }}</p>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- العمود الأيمن: الصورة + الحالة -->
+    <div class="col-md-5">
+
+      <!-- الصورة الممسوحة -->
+      <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-image me-2 text-chad-blue"></i>
+          {{ 'الصورة الممسوحة' if lang=='ar' else 'Document scanné' }}
+        </div>
+        <div class="card-body text-center">
+          {% if record.scan_file %}
+            {% set ext = record.scan_file.rsplit('.', 1)[-1].lower() %}
+            {% if ext in ['jpg', 'jpeg', 'png'] %}
+            <img src="{{ url_for('static', filename='archive_scans/' + record.scan_file) }}"
+                 class="img-fluid rounded-3 shadow-sm"
+                 style="max-height:320px;cursor:zoom-in"
+                 onclick="window.open(this.src)">
+            {% elif ext == 'pdf' %}
+            <div class="p-4">
+              <i class="fas fa-file-pdf fa-4x text-danger mb-3"></i>
+              <div>
+                <a href="{{ url_for('static', filename='archive_scans/' + record.scan_file) }}"
+                   target="_blank" class="btn btn-outline-danger btn-sm">
+                  <i class="fas fa-external-link-alt me-1"></i>
+                  {{ 'فتح PDF' if lang=='ar' else 'Ouvrir PDF' }}
+                </a>
+              </div>
+            </div>
+            {% else %}
+            <div class="p-4">
+              <i class="fas fa-file fa-4x text-secondary mb-3"></i>
+              <p class="small text-muted">{{ record.scan_file }}</p>
+            </div>
+            {% endif %}
+            <div class="mt-2">
+              <span class="badge bg-light text-dark border">
+                {{ 'الجودة:' if lang=='ar' else 'Qualité:' }}
+                {{ record.scan_quality or '—' }}
+              </span>
+            </div>
+          {% else %}
+          <div class="py-4 text-muted">
+            <i class="fas fa-image fa-3x mb-3 opacity-25"></i>
+            <p class="small mb-0">{{ 'لا توجد صورة ممسوحة' if lang=='ar' else 'Aucun scan disponible' }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- تحديث حالة النسخ -->
+      {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+      <div class="card border-0 shadow-sm rounded-4 mb-3">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-tasks me-2 text-chad-blue"></i>
+          {{ 'تحديث حالة النسخ' if lang=='ar' else 'Mettre à jour le statut' }}
+        </div>
+        <div class="card-body">
+          <form method="POST" action="{{ url_for('archive.set_status', record_id=record.id) }}"
+                class="d-flex gap-2">
+            <select name="status" class="form-select form-select-sm">
+              <option value="pending"     {{ 'selected' if record.transcription_status=='pending' }}>
+                {{ 'في الانتظار' if lang=='ar' else 'En attente' }}</option>
+              <option value="in_progress" {{ 'selected' if record.transcription_status=='in_progress' }}>
+                {{ 'جارٍ النسخ' if lang=='ar' else 'En cours' }}</option>
+              <option value="done"        {{ 'selected' if record.transcription_status=='done' }}>
+                {{ 'منسوخ' if lang=='ar' else 'Transcrit' }}</option>
+              <option value="verified"    {{ 'selected' if record.transcription_status=='verified' }}>
+                {{ 'مُتحقَّق منه' if lang=='ar' else 'Vérifié' }}</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-chad-blue">
+              {{ 'حفظ' if lang=='ar' else 'OK' }}
+            </button>
+          </form>
+          {% if record.verified_by and record.verified_at %}
+          <div class="mt-2 text-muted small">
+            <i class="fas fa-check-circle text-success me-1"></i>
+            {{ 'تحقَّق منه:' if lang=='ar' else 'Vérifié par:' }}
+            {{ record.verifier.full_name if record.verifier else '—' }}
+            — {{ record.verified_at.strftime('%Y-%m-%d') }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- معلومات الأرشفة -->
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-light fw-bold py-2 px-3">
+          <i class="fas fa-info-circle me-2 text-chad-blue"></i>
+          {{ 'معلومات الأرشفة' if lang=='ar' else 'Métadonnées' }}
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-sm mb-0">
+            <tr><td class="text-muted small">{{ 'رُقِّم بواسطة' if lang=='ar' else 'Numérisé par' }}</td>
+                <td class="small">{{ record.digitizer.full_name if record.digitizer else '—' }}</td></tr>
+            <tr><td class="text-muted small">{{ 'تاريخ الأرشفة' if lang=='ar' else 'Date archivage' }}</td>
+                <td class="small">{{ record.created_at.strftime('%Y-%m-%d %H:%M') if record.created_at else '—' }}</td></tr>
+            <tr><td class="text-muted small">{{ 'المركز' if lang=='ar' else 'Centre' }}</td>
+                <td class="small">{{ record.center.name_ar if record.center else '—' }}</td></tr>
+            {% if record.notes %}
+            <tr><td class="text-muted small">{{ 'ملاحظات' if lang=='ar' else 'Notes' }}</td>
+                <td class="small">{{ record.notes }}</td></tr>
+            {% endif %}
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'وثيقة طلاق' if lang=='ar' else 'Acte de divorce' }} — {{ divorce.certificate_number }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="fw-bold mb-0">
+    <i class="fas fa-file-contract me-2 text-danger"></i>
+    {{ 'وثيقة طلاق' if lang=='ar' else 'Acte de divorce' }}
+  </h4>
+  <div class="d-flex gap-2">
+    {% if current_user.role in ['officer','region_mgr','admin'] %}
+    <a href="{{ url_for('divorces.edit', divorce_id=divorce.id) }}"
+       class="btn btn-outline-warning btn-sm">
+      <i class="fas fa-edit me-1"></i>{{ 'تعديل' if lang=='ar' else 'Modifier' }}
+    </a>
+    {% endif %}
+    <a href="{{ url_for('divorces.export_pdf', divorce_id=divorce.id) }}"
+       class="btn btn-danger btn-sm" target="_blank">
+      <i class="fas fa-file-pdf me-1"></i>{{ 'تصدير PDF' if lang=='ar' else 'Exporter PDF' }}
+    </a>
+    <a href="{{ url_for('divorces.index') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="fas fa-arrow-right me-1"></i>{{ 'رجوع' if lang=='ar' else 'Retour' }}
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-8">
+
+    <!-- بيانات الوثيقة -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-danger text-white rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="fas fa-certificate me-2"></i>
+          {{ 'بيانات وثيقة الطلاق' if lang=='ar' else 'Données de l\'acte' }}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'رقم الوثيقة' if lang=='ar' else 'N° Acte' }}</div>
+            <div class="fw-bold fs-5 text-danger">{{ divorce.certificate_number }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'تاريخ التسجيل' if lang=='ar' else 'Date enregistrement' }}</div>
+            <div class="fw-bold">{{ divorce.registration_date }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'تاريخ الطلاق' if lang=='ar' else 'Date divorce' }}</div>
+            <div class="fw-bold">{{ divorce.divorce_date }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'مكان الطلاق' if lang=='ar' else 'Lieu' }}</div>
+            <div>{{ divorce.divorce_place }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'نوع الطلاق' if lang=='ar' else 'Type' }}</div>
+            <div>
+              {% if divorce.divorce_type == 'mutual' %}
+                <span class="badge bg-warning text-dark">{{ 'بالتراضي' if lang=='ar' else 'Consentement mutuel' }}</span>
+              {% elif divorce.divorce_type == 'judicial' %}
+                <span class="badge bg-info">{{ 'قضائي' if lang=='ar' else 'Judiciaire' }}</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ 'طلاق (رجعي/بائن)' if lang=='ar' else 'Répudiation' }}</span>
+              {% endif %}
+            </div>
+          </div>
+          {% if divorce.marriage_cert_number %}
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'رقم عقد الزواج' if lang=='ar' else 'N° acte mariage' }}</div>
+            <div class="font-monospace">{{ divorce.marriage_cert_number }}</div>
+          </div>
+          {% endif %}
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'ضابط الحالة المدنية' if lang=='ar' else 'Officier' }}</div>
+            <div>{{ divorce.civil_officer }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'المركز' if lang=='ar' else 'Centre' }}</div>
+            <div>{{ divorce.center.name_ar if lang=='ar' else divorce.center.name_fr }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الزوج -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="fas fa-male me-2 text-danger"></i>
+          {{ 'بيانات الزوج' if lang=='ar' else 'Époux' }}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}</div>
+            <div class="fw-bold">{{ divorce.husband_full_name }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">{{ 'تاريخ الميلاد' if lang=='ar' else 'Naissance' }}</div>
+            <div>{{ divorce.husband_birth_date }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu' }}</div>
+            <div>{{ divorce.husband_birth_place }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'المهنة' if lang=='ar' else 'Profession' }}</div>
+            <div>{{ divorce.husband_profession }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }}</div>
+            <div>{{ divorce.husband_nationality }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }}</div>
+            <div class="font-monospace">{{ divorce.husband_id_number }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الزوجة -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="fas fa-female me-2 text-chad-yellow"></i>
+          {{ 'بيانات الزوجة' if lang=='ar' else 'Épouse' }}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}</div>
+            <div class="fw-bold">{{ divorce.wife_full_name }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">{{ 'تاريخ الميلاد' if lang=='ar' else 'Naissance' }}</div>
+            <div>{{ divorce.wife_birth_date }}</div>
+          </div>
+          <div class="col-md-3">
+            <div class="text-muted small">{{ 'مكان الميلاد' if lang=='ar' else 'Lieu' }}</div>
+            <div>{{ divorce.wife_birth_place }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'المهنة' if lang=='ar' else 'Profession' }}</div>
+            <div>{{ divorce.wife_profession }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'الجنسية' if lang=='ar' else 'Nationalité' }}</div>
+            <div>{{ divorce.wife_nationality }}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'رقم الهوية' if lang=='ar' else 'N° CIN' }}</div>
+            <div class="font-monospace">{{ divorce.wife_id_number }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- الأطفال والشهود -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="fas fa-users me-2"></i>
+          {{ 'الأطفال والشهود' if lang=='ar' else 'Enfants et témoins' }}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'عدد الأطفال' if lang=='ar' else 'Enfants' }}</div>
+            <div class="fw-bold fs-5">{{ divorce.children_count or 0 }}</div>
+          </div>
+          {% if divorce.custody_decision %}
+          <div class="col-md-4">
+            <div class="text-muted small">{{ 'قرار الحضانة' if lang=='ar' else 'Garde' }}</div>
+            <div>
+              {% if divorce.custody_decision == 'mother' %}{{ 'الأم' if lang=='ar' else 'Mère' }}
+              {% elif divorce.custody_decision == 'father' %}{{ 'الأب' if lang=='ar' else 'Père' }}
+              {% elif divorce.custody_decision == 'shared' %}{{ 'مشتركة' if lang=='ar' else 'Partagée' }}
+              {% else %}{{ 'بقرار المحكمة' if lang=='ar' else 'Jugement' }}{% endif %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="col-12"><hr class="my-1"></div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'الشاهد الأول' if lang=='ar' else 'Témoin 1' }}</div>
+            <div class="fw-bold">{{ divorce.witness1_name }} <span class="text-muted small">({{ divorce.witness1_id }})</span></div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'الشاهد الثاني' if lang=='ar' else 'Témoin 2' }}</div>
+            <div class="fw-bold">{{ divorce.witness2_name }} <span class="text-muted small">({{ divorce.witness2_id }})</span></div>
+          </div>
+          {% if divorce.court_decision_number %}
+          <div class="col-12"><hr class="my-1"></div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'رقم الحكم القضائي' if lang=='ar' else 'N° jugement' }}</div>
+            <div>{{ divorce.court_decision_number }}</div>
+          </div>
+          <div class="col-md-6">
+            <div class="text-muted small">{{ 'المحكمة' if lang=='ar' else 'Tribunal' }}</div>
+            <div>{{ divorce.court_name }}</div>
+          </div>
+          {% endif %}
+          {% if divorce.notes %}
+          <div class="col-12">
+            <div class="text-muted small">{{ 'ملاحظات' if lang=='ar' else 'Notes' }}</div>
+            <div>{{ divorce.notes }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- QR Code -->
+  <div class="col-md-4">
+    {% if document %}
+    <div class="card border-0 shadow-sm rounded-4 text-center">
+      <div class="card-header bg-light rounded-top-4 py-3">
+        <h6 class="mb-0 fw-bold">
+          <i class="fas fa-qrcode me-2"></i>
+          {{ 'التحقق' if lang=='ar' else 'Vérification' }}
+        </h6>
+      </div>
+      <div class="card-body p-4">
+        {% if qr_image %}
+        <img src="data:image/png;base64,{{ qr_image }}" alt="QR Code" width="150" class="rounded mb-3">
+        {% endif %}
+        <p class="text-muted small mb-3">
+          {{ 'امسح الرمز للتحقق من الوثيقة' if lang=='ar' else 'Scannez pour vérifier' }}
+        </p>
+        <a href="{{ url_for('documents.verify', token=document.qr_code) }}"
+           class="btn btn-outline-danger btn-sm w-100" target="_blank">
+          <i class="fas fa-check-circle me-1"></i>
+          {{ 'تحقق من الوثيقة' if lang=='ar' else 'Vérifier' }}
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'تسجيل مواطن جديد' if lang=='ar' else 'Inscription Citoyen' }}{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center mt-4">
+  <div class="col-md-5 col-lg-4">
+
+    <div class="text-center mb-4">
+      <h4 class="fw-bold text-chad-blue">
+        <i class="fas fa-user-plus me-2"></i>
+        {{ 'إنشاء حساب مواطن' if lang=='ar' else 'Créer un compte citoyen' }}
+      </h4>
+      <p class="text-muted small">
+        {{ 'أدخل رقمك الوطني لإنشاء حساب في بوابة المواطن' if lang=='ar'
+           else 'Entrez votre NNI pour créer votre compte' }}
+      </p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body p-4">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for cat, msg in messages %}
+          <div class="alert alert-{{ cat }} rounded-3 py-2 small">{{ msg }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              {{ 'الرقم الوطني (NNI)' if lang=='ar' else 'Numéro National (NNI)' }}
+              <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="nni" class="form-control font-monospace text-center"
+                   placeholder="000000000000" required
+                   value="{{ request.form.get('nni','') }}">
+            <div class="form-text">
+              {{ 'الرقم المكون من 12 رقماً في بطاقة هويتك' if lang=='ar'
+                 else 'Le numéro à 12 chiffres figurant sur votre carte d\'identité' }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              {{ 'الاسم الكامل' if lang=='ar' else 'Nom complet' }}
+              <span class="text-danger">*</span>
+            </label>
+            <input type="text" name="full_name" class="form-control" required
+                   value="{{ request.form.get('full_name','') }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              {{ 'كلمة المرور' if lang=='ar' else 'Mot de passe' }}
+              <span class="text-danger">*</span>
+            </label>
+            <input type="password" name="password" class="form-control" required
+                   minlength="6">
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              {{ 'تأكيد كلمة المرور' if lang=='ar' else 'Confirmer le mot de passe' }}
+              <span class="text-danger">*</span>
+            </label>
+            <input type="password" name="confirm_password" class="form-control" required>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-chad-blue btn-lg fw-bold">
+              <i class="fas fa-user-plus me-2"></i>
+              {{ 'إنشاء الحساب' if lang=='ar' else 'Créer le compte' }}
+            </button>
+          </div>
+        </form>
+
+        <hr class="my-3">
+        <div class="text-center small">
+          <span class="text-muted">{{ 'لديك حساب؟' if lang=='ar' else 'Déjà inscrit?' }}</span>
+          <a href="{{ url_for('citizen.login') }}" class="fw-semibold text-chad-blue ms-1">
+            {{ 'سجّل دخولك' if lang=='ar' else 'Se connecter' }}
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

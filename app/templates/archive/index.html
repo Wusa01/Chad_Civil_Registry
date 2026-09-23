@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'الأرشيف الرقمي' if lang == 'ar' else 'Archives numériques' }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- رأس -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h3 class="fw-bold text-chad-blue mb-0">
+      <i class="fas fa-archive me-2"></i>
+      {{ 'الأرشيف الرقمي للسجلات التاريخية' if lang == 'ar' else 'Archives numériques historiques' }}
+    </h3>
+    {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+    <a href="{{ url_for('archive.new') }}" class="btn btn-chad-blue">
+      <i class="fas fa-plus me-2"></i>
+      {{ 'رقمنة وثيقة جديدة' if lang == 'ar' else 'Numériser un document' }}
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- إحصاءات -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm text-center p-3 rounded-4">
+        <div class="fw-bold fs-4 text-chad-blue">{{ stats.total }}</div>
+        <div class="text-muted small">{{ 'إجمالي' if lang == 'ar' else 'Total' }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm text-center p-3 rounded-4">
+        <div class="fw-bold fs-4 text-secondary">{{ stats.pending }}</div>
+        <div class="text-muted small">{{ 'في الانتظار' if lang == 'ar' else 'En attente' }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm text-center p-3 rounded-4">
+        <div class="fw-bold fs-4 text-info">{{ stats.done }}</div>
+        <div class="text-muted small">{{ 'منسوخة' if lang == 'ar' else 'Transcrit' }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm text-center p-3 rounded-4">
+        <div class="fw-bold fs-4 text-success">{{ stats.verified }}</div>
+        <div class="text-muted small">{{ 'مُتحقَّق منها' if lang == 'ar' else 'Vérifiés' }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-2">
+      <div class="card border-0 shadow-sm text-center p-3 rounded-4">
+        <div class="fw-bold fs-4 text-warning">{{ stats.with_scan }}</div>
+        <div class="text-muted small">{{ 'بصورة ممسوحة' if lang == 'ar' else 'Avec scan' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- فلاتر البحث -->
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+      <form method="GET" class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold">
+            {{ 'بحث بالاسم أو الرقم' if lang == 'ar' else 'Recherche' }}
+          </label>
+          <input type="text" name="search" class="form-control"
+                 value="{{ search }}" placeholder="{{ 'اسم الشخص...' if lang == 'ar' else 'Nom...' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold">
+            {{ 'نوع الوثيقة' if lang == 'ar' else 'Type' }}
+          </label>
+          <select name="doc_type" class="form-select">
+            <option value="">{{ 'الكل' if lang == 'ar' else 'Tous' }}</option>
+            <option value="birth"    {{ 'selected' if doc_type=='birth' }}>{{ 'ميلاد' if lang=='ar' else 'Naissance' }}</option>
+            <option value="marriage" {{ 'selected' if doc_type=='marriage' }}>{{ 'زواج' if lang=='ar' else 'Mariage' }}</option>
+            <option value="death"    {{ 'selected' if doc_type=='death' }}>{{ 'وفاة' if lang=='ar' else 'Décès' }}</option>
+            <option value="divorce"  {{ 'selected' if doc_type=='divorce' }}>{{ 'طلاق' if lang=='ar' else 'Divorce' }}</option>
+            <option value="other"    {{ 'selected' if doc_type=='other' }}>{{ 'أخرى' if lang=='ar' else 'Autre' }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold">
+            {{ 'حالة النسخ' if lang == 'ar' else 'Statut' }}
+          </label>
+          <select name="status" class="form-select">
+            <option value="">{{ 'الكل' if lang == 'ar' else 'Tous' }}</option>
+            <option value="pending"     {{ 'selected' if status=='pending' }}>{{ 'في الانتظار' if lang=='ar' else 'En attente' }}</option>
+            <option value="in_progress" {{ 'selected' if status=='in_progress' }}>{{ 'جارٍ' if lang=='ar' else 'En cours' }}</option>
+            <option value="done"        {{ 'selected' if status=='done' }}>{{ 'منسوخ' if lang=='ar' else 'Transcrit' }}</option>
+            <option value="verified"    {{ 'selected' if status=='verified' }}>{{ 'مُتحقَّق' if lang=='ar' else 'Vérifié' }}</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold">
+            {{ 'السنة' if lang == 'ar' else 'Année' }}
+          </label>
+          <input type="number" name="year" class="form-control"
+                 value="{{ year }}" placeholder="1980" min="1800" max="2024">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-chad-blue flex-grow-1">
+            <i class="fas fa-search me-1"></i>
+            {{ 'بحث' if lang == 'ar' else 'Rechercher' }}
+          </button>
+          <a href="{{ url_for('archive.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-times"></i>
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- الجدول -->
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>{{ 'نوع الوثيقة' if lang == 'ar' else 'Type' }}</th>
+              <th>{{ 'اسم الشخص' if lang == 'ar' else 'Nom' }}</th>
+              <th>{{ 'الرقم الأصلي' if lang == 'ar' else 'N° original' }}</th>
+              <th class="text-center">{{ 'السنة' if lang == 'ar' else 'Année' }}</th>
+              <th>{{ 'المركز' if lang == 'ar' else 'Centre' }}</th>
+              <th class="text-center">{{ 'الصورة' if lang == 'ar' else 'Scan' }}</th>
+              <th class="text-center">{{ 'حالة النسخ' if lang == 'ar' else 'Statut' }}</th>
+              <th class="text-center">{{ 'إجراء' if lang == 'ar' else 'Action' }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rec in records.items %}
+            <tr>
+              <td class="text-muted small">{{ rec.id }}</td>
+              <td>
+                <span class="badge bg-chad-blue">{{ rec.doc_type_label_ar }}</span>
+              </td>
+              <td class="fw-semibold">{{ rec.person_name }}</td>
+              <td class="font-monospace small">{{ rec.original_number or '—' }}</td>
+              <td class="text-center">{{ rec.original_year or '—' }}</td>
+              <td class="small text-muted">
+                {{ rec.center.name_ar if rec.center else (rec.original_center or '—') }}
+              </td>
+              <td class="text-center">
+                {% if rec.scan_file %}
+                  <i class="fas fa-image text-success" title="{{ rec.scan_file }}"></i>
+                {% else %}
+                  <i class="fas fa-times text-muted opacity-25"></i>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <span class="badge bg-{{ rec.status_color }}">
+                  {{ rec.status_label_ar }}
+                </span>
+              </td>
+              <td class="text-center">
+                <a href="{{ url_for('archive.detail', record_id=rec.id) }}"
+                   class="btn btn-sm btn-outline-primary">
+                  <i class="fas fa-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-5">
+                <i class="fas fa-archive fa-3x mb-3 opacity-25 d-block"></i>
+                {{ 'لا توجد سجلات مؤرشفة بعد' if lang == 'ar' else 'Aucune archive trouvée' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if records.pages > 1 %}
+    <div class="card-footer bg-white">
+      <nav>
+        <ul class="pagination pagination-sm justify-content-center mb-0">
+          {% if records.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('archive.index', page=records.prev_num,
+               search=search, doc_type=doc_type, status=status, year=year) }}">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </li>
+          {% endif %}
+          {% for p in records.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+            <li class="page-item {{ 'active' if p == records.page }}">
+              <a class="page-link" href="{{ url_for('archive.index', page=p,
+                 search=search, doc_type=doc_type, status=status, year=year) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+          {% if records.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('archive.index', page=records.next_num,
+               search=search, doc_type=doc_type, status=status, year=year) }}">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

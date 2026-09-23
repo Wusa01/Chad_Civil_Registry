@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'عقود الزواج' if lang == 'ar' else 'Registre des Mariages' }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-bold mb-1">
+            <i class="fas fa-ring me-2 text-success"></i>
+            {{ 'عقود الزواج' if lang == 'ar' else 'Registre des Mariages' }}
+        </h4>
+        <p class="text-muted mb-0 small">
+            {{ 'إجمالي:' if lang == 'ar' else 'Total:' }}
+            <strong>{{ marriages.total }}</strong>
+        </p>
+    </div>
+    {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+    <a href="{{ url_for('marriages.new') }}" class="btn btn-success">
+        <i class="fas fa-plus me-2"></i>
+        {{ 'تسجيل عقد زواج' if lang == 'ar' else 'Nouveau mariage' }}
+    </a>
+    {% endif %}
+</div>
+
+<!-- البحث -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3">
+        <form method="GET" class="row g-2">
+            <div class="col-md-8">
+                <input type="text" name="search" value="{{ search }}"
+                       class="form-control"
+                       placeholder="{{ 'بحث باسم الزوج أو الزوجة أو رقم العقد...' if lang == 'ar' else 'Rechercher...' }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">
+                    <i class="fas fa-search me-1"></i>
+                    {{ 'بحث' if lang == 'ar' else 'Chercher' }}
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ url_for('marriages.index') }}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-times me-1"></i>
+                    {{ 'مسح' if lang == 'ar' else 'Effacer' }}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- الجدول -->
+<div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-0">
+        {% if marriages.items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-chad">
+                    <tr>
+                        <th>#</th>
+                        <th>{{ 'رقم العقد' if lang == 'ar' else 'N° Acte' }}</th>
+                        <th>{{ 'الزوج' if lang == 'ar' else 'Époux' }}</th>
+                        <th>{{ 'الزوجة' if lang == 'ar' else 'Épouse' }}</th>
+                        <th>{{ 'تاريخ الزواج' if lang == 'ar' else 'Date mariage' }}</th>
+                        <th>{{ 'نوع الزواج' if lang == 'ar' else 'Type' }}</th>
+                        <th>{{ 'المركز' if lang == 'ar' else 'Centre' }}</th>
+                        <th>{{ 'إجراءات' if lang == 'ar' else 'Actions' }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for marriage in marriages.items %}
+                    <tr>
+                        <td class="text-muted small">{{ loop.index + (marriages.page - 1) * 20 }}</td>
+                        <td>
+                            <span class="badge bg-success font-monospace">
+                                {{ marriage.certificate_number }}
+                            </span>
+                        </td>
+                        <td class="fw-semibold">{{ marriage.husband_full_name }}</td>
+                        <td class="fw-semibold">{{ marriage.wife_full_name }}</td>
+                        <td class="font-monospace small">{{ marriage.marriage_date }}</td>
+                        <td>
+                            {% if marriage.marriage_type == 'monogamy' %}
+                            <span class="badge bg-info">
+                                {{ 'أحادي' if lang == 'ar' else 'Monogame' }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">
+                                {{ 'تعدد' if lang == 'ar' else 'Polygame' }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small class="text-muted">
+                                {{ marriage.center.name_ar if lang == 'ar' and marriage.center
+                                   else marriage.center.name_fr if marriage.center else '—' }}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('marriages.detail', marriage_id=marriage.id) }}"
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if current_user.role in ['officer', 'region_mgr', 'admin'] %}
+                                <a href="{{ url_for('marriages.edit', marriage_id=marriage.id) }}"
+                                   class="btn btn-outline-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ url_for('marriages.export_pdf', marriage_id=marriage.id) }}"
+                                   class="btn btn-outline-danger" target="_blank">
+                                    <i class="fas fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if marriages.pages > 1 %}
+        <div class="d-flex justify-content-center py-3">
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    {% if marriages.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('marriages.index', page=marriages.prev_num, search=search) }}">
+                            <i class="fas fa-chevron-{{ 'right' if lang == 'ar' else 'left' }}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% for p in marriages.iter_pages() %}
+                        {% if p %}
+                        <li class="page-item {{ 'active' if p == marriages.page }}">
+                            <a class="page-link" href="{{ url_for('marriages.index', page=p, search=search) }}">{{ p }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">…</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    {% if marriages.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('marriages.index', page=marriages.next_num, search=search) }}">
+                            <i class="fas fa-chevron-{{ 'left' if lang == 'ar' else 'right' }}"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-ring fa-4x text-muted opacity-25 mb-3"></i>
+            <p class="text-muted">
+                {{ 'لا توجد عقود زواج مسجلة' if lang == 'ar' else 'Aucun acte de mariage trouvé' }}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

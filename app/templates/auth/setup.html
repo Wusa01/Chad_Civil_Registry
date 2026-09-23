@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}
+{{ 'إعداد النظام لأول مرة' if lang == 'ar' else 'Configuration initiale' }}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-lg border-0 rounded-4">
+
+            <div class="card-header bg-chad-blue text-white text-center py-4 rounded-top-4">
+                <div class="flag-mini-lg d-flex justify-content-center mb-3">
+                    <span class="flag-blue-lg"></span>
+                    <span class="flag-yellow-lg"></span>
+                    <span class="flag-red-lg"></span>
+                </div>
+                <h4 class="mb-1 fw-bold">
+                    {{ 'جمهورية تشاد' if lang == 'ar' else 'République du Tchad' }}
+                </h4>
+                <p class="mb-0 opacity-75 small">
+                    {{ 'الإعداد الأولي للنظام' if lang == 'ar' else 'Configuration initiale du système' }}
+                </p>
+            </div>
+
+            <div class="card-body p-4">
+                <h5 class="text-center mb-2 text-muted">
+                    <i class="fas fa-user-shield me-2"></i>
+                    {{ 'إنشاء حساب المدير الأول' if lang == 'ar' else 'Créer le premier compte administrateur' }}
+                </h5>
+                <p class="text-center text-muted small mb-4">
+                    {{ 'لم يتم إعداد أي مدير بعد. أنشئ حساب المدير الرئيسي لبدء استخدام النظام.'
+                       if lang == 'ar' else
+                       "Aucun administrateur n'est encore configuré. Créez le compte administrateur principal pour commencer." }}
+                </p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                {% for category, msg in messages %}
+                <div class="alert alert-{{ category }} py-2">{{ msg }}</div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-user me-1 text-chad-blue"></i>
+                            {{ 'اسم المستخدم' if lang == 'ar' else "Nom d'utilisateur" }}
+                        </label>
+                        <input type="text" name="username" class="form-control form-control-lg" required autofocus>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-id-badge me-1 text-chad-blue"></i>
+                            {{ 'الاسم الكامل' if lang == 'ar' else 'Nom complet' }}
+                        </label>
+                        <input type="text" name="full_name" class="form-control form-control-lg" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-envelope me-1 text-chad-blue"></i>
+                            {{ 'البريد الإلكتروني' if lang == 'ar' else 'E-mail' }}
+                        </label>
+                        <input type="email" name="email" class="form-control form-control-lg" required>
+                        <div class="form-text">
+                            {{ 'يُستخدم لاحقاً لاستعادة كلمة المرور في حال نسيانها'
+                               if lang == 'ar' else
+                               'Utilisé pour réinitialiser le mot de passe en cas d’oubli' }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-key me-1 text-chad-blue"></i>
+                            {{ 'كلمة المرور' if lang == 'ar' else 'Mot de passe' }}
+                        </label>
+                        <input type="password" name="password" class="form-control form-control-lg" minlength="6" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            {{ 'تأكيد كلمة المرور' if lang == 'ar' else 'Confirmer le mot de passe' }}
+                        </label>
+                        <input type="password" name="confirm_password" class="form-control form-control-lg" minlength="6" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-chad-blue btn-lg w-100">
+                        <i class="fas fa-check-circle me-2"></i>
+                        {{ 'إنشاء حساب المدير' if lang == 'ar' else "Créer l'administrateur" }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
