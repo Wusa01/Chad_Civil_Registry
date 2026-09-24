@@ -1,0 +1,40 @@
+name: Build Windows Application
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller pillow
+
+      - name: Convert application icon
+        run: |
+          python -c "from PIL import Image; Image.open('chad-civil-registry.png').convert('RGBA').save('chad-civil-registry.ico', format='ICO', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])"
+
+      - name: Build Windows executable
+        run: |
+          pyinstaller --onefile --windowed --name ChadCivilRegistry --icon=chad-civil-registry.ico run.py
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ChadCivilRegistry-Windows
+          path: dist/ChadCivilRegistry.exe
