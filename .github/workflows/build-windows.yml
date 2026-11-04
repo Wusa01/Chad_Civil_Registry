@@ -1,10 +1,16 @@
-name: Build Windows Application
+
+name: Build Windows Installer
 
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "v*"
+
+permissions:
+  contents: read
 
 jobs:
   build-windows:
@@ -17,24 +23,72 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller pillow
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller
 
-      - name: Convert application icon
+      - name: Verify required files
+        shell: pwsh
         run: |
-          python -c "from PIL import Image; Image.open('chad-civil-registry.png').convert('RGBA').save('chad-civil-registry.ico', format='ICO', sizes=[(256,256),(128,128),(64,64),(48,48),(32,32),(16,16)])"
+          $files = @(
+            "desktop.py",
+            "ChadCivilRegistry.spec",
+            "installer/ChadCivilRegistry.iss",
+            "app/static/images/chad-civil-registry.ico"
+          )
 
-      - name: Build Windows executable
+          foreach ($file in $files) {
+            if (!(Test-Path $file)) {
+              throw "Required file not found: $file"
+            }
+          }
+
+      - name: Build application
         run: |
-          pyinstaller --onefile --windowed --name ChadCivilRegistry --icon=chad-civil-registry.ico run.py
+          python -m PyInstaller --noconfirm --clean ChadCivilRegistry.spec
 
-      - name: Upload Windows build
+      - name: Verify application build
+        shell: pwsh
+        run: |
+          if (!(Test-Path "dist/ChadCivilRegistry/ChadCivilRegistry.exe")) {
+            throw "PyInstaller did not create the application executable."
+          }
+
+      - name: Install Inno Setup
+        run: |
+          choco install innosetup --no-progress -y
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+
+          if (!(Test-Path $compiler)) {
+            throw "Inno Setup compiler was not found: $compiler"
+          }
+
+          & $compiler "installer\ChadCivilRegistry.iss"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed to build the installer."
+          }
+
+      - name: Verify installer
+        shell: pwsh
+        run: |
+          if (!(Test-Path "dist/installer/ChadCivilRegistry-Setup.exe")) {
+            throw "Windows installer was not created."
+          }
+
+      - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: ChadCivilRegistry-Windows
-          path: dist/ChadCivilRegistry.exe
+          name: ChadCivilRegistry-Installer
+          path: dist/installer/ChadCivilRegistry-Setup.exe
+          if-no-files-found: error
