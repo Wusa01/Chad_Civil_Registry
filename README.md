@@ -39,7 +39,7 @@ Chad Civil Registry هو مشروع نظام رقمي لإدارة السجل ا
 
 طريقة التشغيل
 
-1. الحصول على حزمة Windows من قسم "Releases" (https://github.com/ABDELKERIMALI/Chad-Civil-Registry-Desktop/releases) عند توفرها.
+1. الحصول على حزمة Windows من قسم "Releases"(https://github.com/Wusa01/Chad_Civil_Registry/releases)
 2. تثبيت الحزمة أو تشغيل النسخة التنفيذية وفق تعليمات الإصدار.
 3. تشغيل التطبيق.
 4. يفتح التطبيق واجهته في متصفح الإنترنت الافتراضي.
