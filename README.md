@@ -398,8 +398,7 @@ Chad_Civil_Registry/
 
 1. استنساخ المشروع
 
-git clone https://github.com/ABDELKERIMALI/Chad-Civil-Registry-Desktop.git
-
+git clone https://github.com/Wusa01/Chad_Civil_Registry.git
 ثم الانتقال إلى مجلد المشروع:
 
 cd Chad-Civil-Registry-Desktop
